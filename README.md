@@ -5,6 +5,10 @@ This is the Pytorch implementation for the multiple instance learning model desc
   <img src="thumbnails/overview.png" width="700px" />
 </div>
 
+<div align="center">
+  <img src="thumbnails/overview-2.png" width="700px" />
+</div>
+
 ## Installation
 Install [anaconda/miniconda](https://docs.conda.io/en/latest/miniconda.html)
 Required packages

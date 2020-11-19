@@ -2,7 +2,11 @@
 This is the Pytorch implementation for the multiple instance learning model described in the paper [Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning](https://arxiv.org/abs/2011.08939). 
 
 <div align="center">
-  <img src="thumbnails/slvsmil.png" width="500px" />
+  <img src="thumbnails/overview.png" width="700px" />
+</div>
+
+<div align="center">
+  <img src="thumbnails/overview-2.png" width="700px" />
 </div>
 
 ## Installation
