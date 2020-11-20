@@ -31,6 +31,7 @@ Otherwise, precomputed features for [TCGA Lung Cancer dataset](https://portal.gd
 ```
   $ python download.py --dataset=TCGA
 ```
+The dataset requires 20GB free disk space.  
 
 ## Training on default datasets
 To train DSMIL on standard MIL benchmark dataset:
@@ -41,6 +42,8 @@ To switch between MIL benchmark dataset, use option:
  ```
  [--datasets]      # musk1, musk2, elephant, fox, tiger
  ```
+ Other options are available for learning rate (0.0002), cross validation fold (5), weight-decay (5e-3), and number of epochs (40).  
+ 
  To train DSMIL on TCGA Lung Cancer dataset:
  ```
   $ python train_tcga.py

@@ -114,7 +114,8 @@ def main():
     parser = argparse.ArgumentParser(description='Train DSMIL on classfical MIL datasets')
     parser.add_argument('--datasets', default='musk1', type=str, help='Choose MIL datasets from: musk1, musk2, elephant, fox, tiger')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
-    parser.add_argument('--num_epoch', default=80, type=int, help='Number of total training epochs')
+    parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs')
+    parser.add_argument('--cv_fold', default=5, type=int, help='Number of cross validation fold')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
     args = parser.parse_args()
     
@@ -142,24 +143,14 @@ def main():
         bag_vector = bag_data[:, 3]
         bag_ins_list.append([bag_label, bag_vector])
     bag_ins_list = shuffle(bag_ins_list)
-    test_pos = 0
-    while(test_pos):
-        bags_list, test_list = cross_validation_set(bag_ins_list, fold=10, index=1)
-        pos_c = 0
-        for fold in test_list:
-            pos_c = pos_c + fold[0]
-        print(pos_c)
-        if pos_c >= 0 and pos_c!= len(test_list):
-            test_pos = 1
     
     acs = []
-    num_feats = 166
-    for k in range(0, 10):
-        print('Dataset: ' + args.datasets)
-        print('Start 10-fold cross validation: fold %d ' % (k))
-        bags_list, test_list = cross_validation_set(bag_ins_list, fold=10, index=k)
-        i_classifier = mil.FCLayer(num_feats, 1)
-        b_classifier = mil.BClassifier(input_size=num_feats, output_class=1)
+    print('Dataset: ' + args.datasets)
+    for k in range(0, args.cv_fold):
+        print('Start %d-fold cross validation: fold %d ' % (args.cv_fold, k))
+        bags_list, test_list = cross_validation_set(bag_ins_list, fold=args.cv_fold, index=k)
+        i_classifier = mil.FCLayer(args.num_feats, 1)
+        b_classifier = mil.BClassifier(input_size=args.num_feats, output_class=1)
         milnet = mil.MILNet(i_classifier, b_classifier).cuda()
         pos_weight = torch.tensor(compute_pos_weight(bags_list))
         criterion = nn.BCEWithLogitsLoss(pos_weight)
@@ -174,7 +165,7 @@ def main():
                   (epoch+1, args.num_epoch, train_loss, test_loss, accuracy, auc_value, precision, recall, fscore))
             optimal_ac = max(accuracy, optimal_ac)
             scheduler.step()
-        print('Optimal accuracy: %.4f ' % (optimal_ac))
+        print('\n Optimal accuracy: %.4f ' % (optimal_ac))
         acs.append(optimal_ac)
     print('Cross validation accuracy mean: %.4f, std %.4f ' % (np.mean(np.array(acs)), np.std(np.array(acs))))
     
