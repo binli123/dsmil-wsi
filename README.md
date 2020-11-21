@@ -62,8 +62,7 @@ If you use the code or results in your research, please use the following BibTeX
 @article{li2020dualstream,
   author =   {Bin Li and Yin Li and Kevin W. Eliceiri},
   title =    {Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning},
-  journal =  {arXiv},
-  eprint =   {2011.08939},
+  journal =  {arXiv preprint arXiv:2011.08939},
   year =     {2020}
 }
 
