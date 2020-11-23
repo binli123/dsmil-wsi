@@ -147,6 +147,7 @@ def main():
     ### check both classes exist in testing bags
     valid_bags = 0
     while(valid_bags):
+        bag_ins_list = shuffle(bag_ins_list)
         for k in range (0, args.cv_fold):
             bags_list, test_list = cross_validation_set(bag_ins_list, fold=args.cv_fold, index=k)
             bag_labels = 0
