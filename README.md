@@ -20,7 +20,7 @@ Required packages
 ## Features preparation
 The MIL benchmark dataset can be downloaded via:
 ```
-  $ python download.py --dataset=MIL
+  $ python download.py --dataset=mil
 ```
 
 If you are processing WSI data, you will need a pretrained embedder and precompute the features of each patch.  
@@ -29,7 +29,7 @@ If you are processing WSI data, you will need a pretrained embedder and precompu
 
 Otherwise, precomputed features for [TCGA Lung Cancer dataset](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D) can be downloaded via:  
 ```
-  $ python download.py --dataset=TCGA
+  $ python download.py --dataset=tcga
 ```
 This dataset requires 20GB of free disk space.  
 
