@@ -115,7 +115,7 @@ def main():
     parser.add_argument('--datasets', default='musk1', type=str, help='Choose MIL datasets from: musk1, musk2, elephant, fox, tiger')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
     parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs')
-    parser.add_argument('--cv_fold', default=5, type=int, help='Number of cross validation fold')
+    parser.add_argument('--cv_fold', default=10, type=int, help='Number of cross validation fold')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
     args = parser.parse_args()
     
@@ -143,6 +143,17 @@ def main():
         bag_vector = bag_data[:, 3]
         bag_ins_list.append([bag_label, bag_vector])
     bag_ins_list = shuffle(bag_ins_list)
+    
+    ### check both classes exist in testing bags
+    valid_bags = 0
+    while(valid_bags):
+        for k in range (0, args.cv_fold):
+            bags_list, test_list = cross_validation_set(bag_ins_list, fold=args.cv_fold, index=k)
+            bag_labels = 0
+            for i, data in enumerate(test_list):
+                bag_labels = np.clip(data[0], 0, 1) + bag_labels
+            if bag_labels > 0:
+                valid_bags = 1         
     
     acs = []
     print('Dataset: ' + args.datasets)
