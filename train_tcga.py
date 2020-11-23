@@ -109,7 +109,7 @@ def main():
     parser.add_argument('--num_class', default=2, type=int, help='Number of output classes')
     parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
-    parser.add_argument('--num_epoch', default=100, type=int, help='Number of total training epochs')
+    parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
     args = parser.parse_args()
     
