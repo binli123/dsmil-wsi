@@ -23,15 +23,27 @@ The MIL benchmark dataset can be downloaded via:
   $ python download.py --dataset=mil
 ```
 
-If you are processing WSI data, you will need a pretrained embedder and precompute the features of each patch.  
-* Your WSIs must be cropped into patches first. [OpenSlide](https://openslide.org/) is a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.    
-* For training your embedder, we refer the users to [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR). You would need to feed your WSI patches to the SimCLR framework with "input_shape" argument set as the size of the WSI patch in the configuration file (config.yml).  
-
-Otherwise, precomputed features for [TCGA Lung Cancer dataset](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D) can be downloaded via:  
+Precomputed features for [TCGA Lung Cancer dataset](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D) can be downloaded via:  
 ```
   $ python download.py --dataset=tcga
 ```
-This dataset requires 20GB of free disk space.  
+This dataset requires 20GB of free disk space. 
+
+If you are processing WSI from raw images, you will need to download the WSIs first.  
+1. Navigate to './tcga-download/'
+```
+  $ cd tcga-download
+```
+2. Download WSIs from [TCGA data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) using the manifest file and configuration file. The example shows the case of Windows operating system. The WSIs will be saved in './WSI/TCGA-lung/LUAD' and './WSI/TCGA-lung/LUSC'. The raw WSIs take about 1TB disc space and may take several days to download. Open command line tool, navigate to ./tcga-download, and use:
+```
+  $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUAD.txt --config config-LUAD.dtt
+  $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUSC.txt --config config-LUSC.dtt
+```    
+3. Prepare the patches. We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool. The patches will be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py'  
+```
+  $ python TCGA-pre-crop.py
+```
+* For training your embedder, we refer the users to [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR). You will need to feed your WSI patches to the SimCLR framework with "input_shape" argument set as the size of the WSI patch in the configuration file (config.yml).  
 
 ## Training on default datasets
 To train DSMIL on standard MIL benchmark dataset:
