@@ -34,7 +34,7 @@ If you are processing WSI from raw images, you will need to download the WSIs fi
 ```
   $ cd tcga-download
 ```
-2. Download WSIs from [TCGA data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) using the manifest file and configuration file. The example shows the case of Windows operating system. The WSIs will be saved in './WSI/TCGA-lung/LUAD' and './WSI/TCGA-lung/LUSC'. The raw WSIs take about 1TB disc space and may take several days to download. Open command line tool, navigate to ./tcga-download, and use:
+2. Download WSIs from [TCGA data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) using the manifest file and configuration file. The example shows the case of Windows operating system. The WSIs will be saved in './WSI/TCGA-lung/LUAD' and './WSI/TCGA-lung/LUSC'. The raw WSIs take about 1TB disc space and may take several days to download. Open command line tool (*Command Prompt* for the case of Windows), navigate to './tcga-download', and use commands:
 ```
   $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUAD.txt --config config-LUAD.dtt
   $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUSC.txt --config config-LUSC.dtt
@@ -43,7 +43,10 @@ If you are processing WSI from raw images, you will need to download the WSIs fi
 ```
   $ python TCGA-pre-crop.py
 ```
-* For training your embedder, we refer the users to [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR). You will need to feed your WSI patches to the SimCLR framework with "input_shape" argument set as the size of the WSI patch in the configuration file (config.yml).  
+* For training your embedder, we refer the users to [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) for details. We provided a modified script from this repository. Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu. We recommand to use a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.
+```
+  $ python run.py
+```
 
 ## Training on default datasets
 To train DSMIL on standard MIL benchmark dataset:
