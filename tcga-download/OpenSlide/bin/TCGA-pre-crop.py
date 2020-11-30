@@ -68,7 +68,7 @@ def slide_to_patch(out_base, img_slides, step):
             dimension_5x = (int(dimension_40x[0] / 8), int(dimension_40x[1] / 8))
         else:
             dimension_20x = img.level_dimensions[0]
-            dimension_5x = (int(dimension_20x[0] / 4), int(dimension_40x[1] / 4))
+            dimension_5x = (int(dimension_20x[0] / 4), int(dimension_20x[1] / 4))
         step_y_max = int(np.floor(dimension_5x[1]/step_size)) # rows
         step_x_max = int(np.floor(dimension_5x[0]/step_size)) # columns
         for j in range(step_y_max):
@@ -80,7 +80,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Crop the WSIs into patches at 20x and 5x, saved in a tree of folders')
     path_base = ('../../../WSI/tcga-lung')
     out_base = ('../../../WSI/tcga-lung/pyramid')
-    print(out_base)
     all_slides = glob.glob(join(path_base, '*/*/*.svs'))
     parser.add_argument('--num-threads', type=int, default=4, help='Number of threads for parallel processing, too large may result in errors')
     parser.add_argument('--overlap', type=int, default=32)

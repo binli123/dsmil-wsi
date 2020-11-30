@@ -1,0 +1,23 @@
+batch_size: 96
+epochs: 20
+eval_every_n_epochs: 1
+fine_tune_from: ''
+log_every_n_steps: 25
+weight_decay: 10e-6
+fp16_precision: False
+n_gpu: 0
+gpu_ids: (0)
+
+model:
+  out_dim: 256
+  base_model: "resnet18"
+
+dataset:
+  s: 1
+  input_shape: (224,224,3)
+  num_workers: 4
+  valid_size: 0.1
+
+loss:
+  temperature: 0.5
+  use_cosine_similarity: True
