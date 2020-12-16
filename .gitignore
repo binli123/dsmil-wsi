@@ -3,6 +3,8 @@ mnist_bag/
 WSI/
 simclr/runs
 .ipynb_checkpoints
+.ipynb_checkpoints/
 */.ipynb_checkpoints/*
 */__pycache__/*
 __pycache__
+*.ipynb
