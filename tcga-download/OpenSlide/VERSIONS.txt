@@ -1,0 +1,16 @@
+zlib                           1.2.8
+libpng                         1.6.22
+libjpeg-turbo                  1.5.0
+libtiff                        4.0.6
+OpenJPEG                       2.1.0
+win-iconv                      0.0.8
+gettext                        0.19.8.1
+libffi                         3.2.1
+glib                           2.48.1
+gdk-pixbuf                     2.35.1
+pixman                         0.34.0
+cairo                          1.14.6
+libxml2                        2.9.4
+SQLite                         3.13.0
+OpenSlide                      3.4.1
+OpenSlide Java                 0.12.1
