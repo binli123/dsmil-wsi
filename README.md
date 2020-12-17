@@ -70,11 +70,20 @@ Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
 ```
 
 ## Training on your own datasets
-You could modify train_tcga.py to easily let it work with your datasets. You will need to:  
-1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_".  
-2. Generate a "_dataset-name_.csv" file with two columns where the first column contains _bagID_, and the second column contains the class label.
-3. Replace the corresponding file path in the script with the file path of "_dataset_.csv" file, and change the data directory path in the dataloader to the path of the folder "_dataset-name_"
-4. Configure the number of class for creating the DSMIL model.
+You could modify train_tcga.py to easily let it work with your datasets. After you have trained your embedder, you will need to compute the features and organize them as:  
+1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_".
+<div align="center">
+  <img src="thumbnails/bag.png" width="400px" />
+</div>  
+2. Generate a "_dataset-name_.csv" file with two columns where the first column contains the paths to all _bagID_.csv files, and the second column contains the bag labels.
+<div align="center">
+  <img src="thumbnails/bags.png" width="400px" />
+</div>  
+3. Replace the corresponding file path in the script with the file path of "_dataset_.csv". 
+```
+  bags_path = pd.read_csv(PATH_TO_[_dataset-name_.csv])
+```
+4. Configure the corresponding number of classes argument for creating the DSMIL model.
 
 ## Citation
 If you use the code or results in your research, please use the following BibTeX entry.  

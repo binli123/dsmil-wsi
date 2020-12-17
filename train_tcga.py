@@ -19,7 +19,7 @@ def get_bag_feats(csv_file_df, args):
     if args.simclr == 0:
         feats_csv_path = 'datasets/tcga-dataset/tcga_lung_data_feats/' + csv_file_df.iloc[0].split(os.sep)[1] + '.csv'
     else:
-        feats_csv_path = 'datasets/wsi-tcga-lung/' + os.path.join(csv_file_df.iloc[0].split(os.sep)[-2], csv_file_df.iloc[0].split(os.sep)[-1])
+        feats_csv_path = csv_file_df.iloc[0]
     df = pd.read_csv(feats_csv_path)
     feats = shuffle(df).reset_index(drop=True)
     feats = feats.to_numpy()
@@ -127,7 +127,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epoch, 0)
     
     if args.simclr == 0:
-        bags_path = pd.read_csv('datasets'+os.sep+'tcga-dataset'+os.sep+'TCGA.csv')
+        bags_csv = 'datasets/tcga-dataset/TCGA.csv'
     else:
         luad_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUAD'+os.sep+'*.csv')
         lusc_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUSC'+os.sep+'*.csv')
@@ -140,6 +140,9 @@ def main():
         bags_path = luad_df.append(lusc_df, ignore_index=True)
         bags_path = shuffle(bags_path)
         bags_path.to_csv('datasets/wsi-tcga-lung/TCGA.csv', index=False)
+        bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
+        
+    bags_path = pd.read_csv(bags_csv)
     train_path = bags_path.iloc[0:int(len(bags_path)*0.8), :]
     test_path = bags_path.iloc[int(len(bags_path)*0.8):, :]
     
