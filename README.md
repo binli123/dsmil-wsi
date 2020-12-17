@@ -98,6 +98,10 @@ You could modify train_tcga.py to easily let it work with your datasets. After y
   bags_path = pd.read_csv(PATH_TO_[dataset-name.csv])
 ```
 4. Configure the corresponding number of classes argument for creating the DSMIL model.
+5. Start training.  
+```
+  $ python train_tcga.py --simclr=1
+```
 
 ## Citation
 If you use the code or results in your research, please use the following BibTeX entry.  

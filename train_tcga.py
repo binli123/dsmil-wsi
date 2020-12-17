@@ -17,7 +17,7 @@ import dsmil as mil
 
 def get_bag_feats(csv_file_df, args):
     if args.simclr == 0:
-        feats_csv_path = 'datasets/tcga-dataset/tcga_lung_data_feats/' + csv_file_df.iloc[0].split(os.sep)[1] + '.csv'
+        feats_csv_path = 'datasets/tcga-dataset/tcga_lung_data_feats/' + csv_file_df.iloc[0].split('/')[1] + '.csv'
     else:
         feats_csv_path = csv_file_df.iloc[0]
     df = pd.read_csv(feats_csv_path)
