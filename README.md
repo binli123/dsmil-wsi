@@ -29,6 +29,22 @@ Precomputed features for [TCGA Lung Cancer dataset](https://portal.gdc.cancer.go
 ```
 This dataset requires 20GB of free disk space.
 
+## **Training on default datasets.**  
+Train DSMIL on standard MIL benchmark dataset:
+```
+  $ python train_mil.py
+```
+Switch between MIL benchmark dataset, use option:
+ ```
+ [--datasets]      # musk1, musk2, elephant, fox, tiger
+ ```
+Other options are available for learning rate (0.0002), cross validation fold (5), weight-decay (5e-3), and number of epochs (40).  
+ 
+Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
+ ```
+  $ python train_tcga.py --simclr=0
+```
+
 ## Process WSI data
 If you are processing WSI from raw images, you will need to download the WSIs first.  
 1. **Download WSIs.**  
@@ -44,44 +60,42 @@ The raw WSIs take about 1TB disc space and may take several days to download. Op
 We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
 The patches will be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py'  
 ```
+  cd tcga-download/OpenSlide/bin
   $ python TCGA-pre-crop.py
 ```
 3. **Train the embedder.**  
 We provided a modified script from this repository [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) For training the embedder.  
 Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu(s). We recommand to use a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.
 ```
+  cd simclr
   $ python run.py
 ```
-
-## **Training on default datasets.**  
-Train DSMIL on standard MIL benchmark dataset:
+4. **Compute the features.**  
 ```
-  $ python train_mil.py
+  $ python compute_feats.py
 ```
-Switch between MIL benchmark dataset, use option:
- ```
- [--datasets]      # musk1, musk2, elephant, fox, tiger
- ```
-Other options are available for learning rate (0.0002), cross validation fold (5), weight-decay (5e-3), and number of epochs (40).  
- 
-Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
- ```
-  $ python train_tcga.py
+5. **Start training.**  
+```
+  $ python train_tcga.py --simclr=1
 ```
 
 ## Training on your own datasets
 You could modify train_tcga.py to easily let it work with your datasets. After you have trained your embedder, you will need to compute the features and organize them as:  
-1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_".
+1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_".  
+
 <div align="center">
   <img src="thumbnails/bag.png" width="400px" />
 </div>  
-2. Generate a "_dataset-name_.csv" file with two columns where the first column contains the paths to all _bagID_.csv files, and the second column contains the bag labels.
+
+2. Generate a "_dataset-name_.csv" file with two columns where the first column contains the paths to all _bagID_.csv files, and the second column contains the bag labels.  
+
 <div align="center">
   <img src="thumbnails/bags.png" width="400px" />
 </div>  
-3. Replace the corresponding file path in the script with the file path of "_dataset_.csv". 
+
+3. Replace the corresponding file path in the script with the file path of "_dataset_.csv".  
 ```
-  bags_path = pd.read_csv(PATH_TO_[_dataset-name_.csv])
+  bags_path = pd.read_csv(PATH_TO_[dataset-name.csv])
 ```
 4. Configure the corresponding number of classes argument for creating the DSMIL model.
 
