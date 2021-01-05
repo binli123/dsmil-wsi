@@ -2,6 +2,8 @@ datasets/
 mnist_bag/
 WSI/
 simclr/runs
+test/
+weights/
 .ipynb_checkpoints
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*

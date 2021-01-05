@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import torchvision.transforms.functional as VF
 from torchvision import transforms
 
-import sys, argparse, os, copy, itertools, glob
+import sys, argparse, os, copy, itertools, glob, datetime
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
@@ -114,7 +114,7 @@ def main():
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
     parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
-    parser.add_argument('--simclr', default=1, type=int, help='Use newly trained features 1/0(on/off)')
+    parser.add_argument('--simclr', default=0, type=int, help='Use newly trained features 1/0(on/off)')
     args = parser.parse_args()
     
     
@@ -124,7 +124,7 @@ def main():
     criterion = nn.BCEWithLogitsLoss()
     
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epoch, 0)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epoch, 0.000005)
     
     if args.simclr == 0:
         bags_csv = 'datasets/tcga-dataset/TCGA.csv'
@@ -145,7 +145,10 @@ def main():
     bags_path = pd.read_csv(bags_csv)
     train_path = bags_path.iloc[0:int(len(bags_path)*0.8), :]
     test_path = bags_path.iloc[int(len(bags_path)*0.8):, :]
-    
+    best_score = 0
+    save_path = os.path.join('weights', datetime.date.today().strftime("%m%d%Y"))
+    os.makedirs(save_path, exist_ok=True)
+    run = len(glob.glob(os.path.join(save_path, '*.pth')))
     for epoch in range(1, args.num_epoch):
         train_path = shuffle(train_path).reset_index(drop=True)
         test_path = shuffle(test_path).reset_index(drop=True)
@@ -154,6 +157,13 @@ def main():
         print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, auc_LUAD: %.4f, auc_LUSC: %.4f' % 
               (epoch, args.num_epoch, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
         scheduler.step()
+        avg_score = (aucs[0] + aucs[1] + avg_score + 1 - test_loss_bag)/4
+        if avg_score >= best_score:
+            best_score = avg_score
+            save_name = os.path.join(save_path, str(run+1)+'.pth')
+            torch.save(milnet.state_dict(), save_name)
+            print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
+            
 
 if __name__ == '__main__':
     main()
