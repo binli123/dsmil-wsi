@@ -59,9 +59,9 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-        if args.magnification == '20x':
+        if  or args.magnification == '20x':
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpg'))
-        else:
+        if args.magnification == '5x' or args.magnification == '10x':
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg'))
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
@@ -71,8 +71,8 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
         df = pd.DataFrame(feats_list)
-        os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-3]), exist_ok=True)
-        df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-3], bags_list[i].split(os.path.sep)[-2]+'.csv'), index=False, float_format='%.4f')
+        os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
+        df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
         sys.stdout.write('\r Computed: {}/{}'.format(i+1, num_bags))
         
 
@@ -110,6 +110,7 @@ def main():
     else:
         weight_path = glob.glob('simclr/runs/*/checkpoints/*.pth')[-1]
     state_dict_weights = torch.load(weight_path)
+
     try:
         state_dict_weights.pop('module.l1.weight')
         state_dict_weights.pop('module.l1.bias')
@@ -129,9 +130,11 @@ def main():
     
     if args.dataset == 'wsi-tcga-lung':
         bags_path = os.path.join('WSI', 'TCGA-lung', 'pyramid', '*', '*')
+    if args.dataset == 'wsi-tcga-lung-single':
+        bags_path = os.path.join('WSI', 'TCGA-lung', 'single', '*', '*')
     feats_path = os.path.join('datasets', args.dataset)
     os.makedirs(feats_path, exist_ok=True)
-    bags_list = glob.glob(bags_path+os.path.sep)
+    bags_list = glob.glob(bags_path)
     compute_feats(args, bags_list, i_classifier, feats_path)
     
 if __name__ == '__main__':
