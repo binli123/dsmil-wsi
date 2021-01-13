@@ -58,11 +58,16 @@ The raw WSIs take about 1TB disc space and may take several days to download. Op
 ```    
 2. **Prepare the patches.**  
 We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
-The patches will be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py'  
+The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py'  
 ```
   cd tcga-download/OpenSlide/bin
-  $ python TCGA-pre-crop.py
+  $ python TCGA-pre-crop.py --multiscale=1
 ```
+Or, the patches could be cropped in a single magnification of 10x and saved in './WSI/TCGA-lung/single' via:  
+```
+  $ python TCGA-pre-crop.py --multiscale=0
+```
+
 3. **Train the embedder.**  
 We provided a modified script from this repository [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) For training the embedder.  
 Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu(s). We recommand to use a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.
@@ -70,13 +75,18 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
   cd simclr
   $ python run.py
 ```
-4. **Compute the features.**  
+4. **Compute the features.**
+Compute the features for 20x magnification
 ```
-  $ python compute_feats.py
+  $ python compute_feats.py --dataset=wsi-tcga-lung
+```
+Compute the features for 10x magnification
+```
+  $ python compute_feats.py --dataset=wsi-tcga-lung-single --magnification=10x
 ```
 5. **Start training.**  
 ```
-  $ python train_tcga.py --simclr=1
+  $ python train_tcga.py --new_features=1
 ```
 
 ## Training on your own datasets

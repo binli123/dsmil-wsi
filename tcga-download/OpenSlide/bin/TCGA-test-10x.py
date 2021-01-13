@@ -23,7 +23,7 @@ def thres_saturation(img, t=15):
     ave_sat = np.sum(sat_img) / (h * w)
     return ave_sat >= t
 
-def crop_slide(img, save_slide_path, position=(0, 0), step=(0, 0), patch_size=224): # position given as (y, x) at 5x scale
+def crop_slide(img, save_slide_path, position=(0, 0), step=(0, 0), patch_size=224): # position given as (x, y) 
         img = img.read_region((position[0] * 4, position[1] * 4), 1, (patch_size, patch_size))
         img = np.array(img)[..., :3]
         if thres_saturation(img, 30):
@@ -41,16 +41,19 @@ def slide_to_patch(out_base, img_slides, step):
         makedirs(bag_path, exist_ok=True)
         img = slide.OpenSlide(img_slide)
         dimension = img.level_dimensions[1] # given as width, height
+        thumbnail = np.array(img.get_thumbnail((int(dimension[0])/7, int(dimension[1])/7)))[..., :3]
+        io.imsave(join('../../../test/thumbnails', img_name + ".png"), img_as_ubyte(thumbnail))        
         step_y_max = int(np.floor(dimension[1]/step_size)) # rows
         step_x_max = int(np.floor(dimension[0]/step_size)) # columns
-        for j in range(step_y_max):
-            for i in range(step_x_max):
-                crop_slide(img, bag_path, (j*step_size, i*step_size), step=(j, i), patch_size=patch_size)
+        for j in range(step_y_max): # rows
+            for i in range(step_x_max): # columns
+                crop_slide(img, bag_path, (i*step_size, j*step_size), step=(j, i), patch_size=patch_size)
                 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Testing workflow includes patch extraction, attention computing, and stitching')
+    parser = argparse.ArgumentParser(description='Generate patches from testing slides')
     path_base = ('../../../test/input')
     out_base = ('../../../test/patches')
+    makedirs('../../../test/thumbnails', exist_ok=True)
     all_slides = glob.glob(join(path_base, '*.svs'))
     parser.add_argument('--thresholds_luad', type=float, default=0.5, help='Optimal threshold returned for LUAD')
     parser.add_argument('--thresholds_lusc', type=float, default=0.5, help='Optimal threshold returned for LUSC')

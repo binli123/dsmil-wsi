@@ -59,7 +59,7 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-        if  or args.magnification == '20x':
+        if  args.magnification == '20x':
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpg'))
         if args.magnification == '5x' or args.magnification == '10x':
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg'))
@@ -132,7 +132,7 @@ def main():
         bags_path = os.path.join('WSI', 'TCGA-lung', 'pyramid', '*', '*')
     if args.dataset == 'wsi-tcga-lung-single':
         bags_path = os.path.join('WSI', 'TCGA-lung', 'single', '*', '*')
-    feats_path = os.path.join('datasets', args.dataset)
+    feats_path = os.path.join('datasets', 'wsi-tcga-lung')
     os.makedirs(feats_path, exist_ok=True)
     bags_list = glob.glob(bags_path)
     compute_feats(args, bags_list, i_classifier, feats_path)
