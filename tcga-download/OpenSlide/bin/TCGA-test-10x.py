@@ -55,8 +55,6 @@ if __name__ == '__main__':
     out_base = ('../../../test/patches')
     makedirs('../../../test/thumbnails', exist_ok=True)
     all_slides = glob.glob(join(path_base, '*.svs'))
-    parser.add_argument('--thresholds_luad', type=float, default=0.5, help='Optimal threshold returned for LUAD')
-    parser.add_argument('--thresholds_lusc', type=float, default=0.5, help='Optimal threshold returned for LUSC')
     parser.add_argument('--overlap', type=int, default=0)
     parser.add_argument('--patch_size', type=int, default=224)
     args = parser.parse_args()

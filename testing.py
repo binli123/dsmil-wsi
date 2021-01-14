@@ -112,8 +112,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size of feeding patches')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--feats_size', type=int, default=512)
-    parser.add_argument('--thres_luad', type=float, default=0.7275)
-    parser.add_argument('--thres_lusc', type=float, default=0.2962)
+    parser.add_argument('--thres_luad', type=float, default=0.7371)
+    parser.add_argument('--thres_lusc', type=float, default=0.2752)
     args = parser.parse_args()
     
     resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
