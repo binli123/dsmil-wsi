@@ -8,8 +8,10 @@ import argparse
 def generate_csv(level='20x'):
     if level=='20x':
         patch_path = glob.glob('../WSI/TCGA-lung/pyramid/*/*/*/*.jpg') # /class_name/bag_name/5x_name/*.jpg
-    else:
+    if level='5x':
         patch_path = glob.glob('../WSI/TCGA-lung/pyramid/*/*/*.jpg') # /class_name/bag_name/*.jpg
+    if level='10x':
+        patch_path = glob.glob('../WSI/TCGA-lung/single/*/*/*.jpg') # /class_name/bag_name/*.jpg
     df = pd.DataFrame(patch_path)
     df.to_csv('all_patches.csv', index=False)
         

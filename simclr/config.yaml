@@ -5,7 +5,7 @@ fine_tune_from: ''
 log_every_n_steps: 25
 weight_decay: 10e-6
 fp16_precision: False
-n_gpu: 0
+n_gpu: 1
 gpu_ids: (0)
 
 model:

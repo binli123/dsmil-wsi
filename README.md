@@ -42,10 +42,10 @@ Other options are available for learning rate (0.0002), cross validation fold (5
  
 Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
  ```
-  $ python train_tcga.py --simclr=0
+  $ python train_tcga.py --new_features=0
 ```
 
-## Process WSI data
+## Processing and testing WSI data
 If you are processing WSI from raw images, you will need to download the WSIs first.  
 1. **Download WSIs.**  
 Navigate to './tcga-download/' and download WSIs from [TCGA data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) using the manifest file and configuration file.  
@@ -58,11 +58,16 @@ The raw WSIs take about 1TB disc space and may take several days to download. Op
 ```    
 2. **Prepare the patches.**  
 We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
-The patches will be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py'  
+The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py':  
 ```
   cd tcga-download/OpenSlide/bin
-  $ python TCGA-pre-crop.py
+  $ python TCGA-pre-crop.py --multiscale=1
 ```
+Or, the patches could be cropped at a single magnification of 10x and saved in './WSI/TCGA-lung/single' via:  
+```
+  $ python TCGA-pre-crop.py --multiscale=0
+```
+
 3. **Train the embedder.**  
 We provided a modified script from this repository [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) For training the embedder.  
 Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu(s). We recommand to use a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.
@@ -71,13 +76,36 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
   $ python run.py
 ```
 4. **Compute the features.**  
+Compute the features for 20x magnification:  
 ```
-  $ python compute_feats.py
+  $ python compute_feats.py --dataset=wsi-tcga-lung
+```
+Compute the features for 10x magnification:  
+```
+  $ python compute_feats.py --dataset=wsi-tcga-lung-single --magnification=10x
 ```
 5. **Start training.**  
 ```
-  $ python train_tcga.py --simclr=1
+  $ python train_tcga.py --new_features=1
 ```
+6. **Testing.**  
+We provided a testing pipeline for several sample slides. The slides can be downloaded via:  
+```
+  $ python download.py --dataset=tcga-test
+```   
+To crop the WSIs into patches, navigate to './tcga-download/OpenSlide/bin' and run the script 'TCGA-pre-crop.py':  
+```
+  $ cd tcga-download/OpenSlide/bin
+  $ python TCGA-test-10x.py
+```  
+A folder containing all patches for each WSI will be created at './test/patches'.  
+After the WSIs are cropped, run the testing script:
+```
+  $ python testing.py
+```   
+The thumbnails of the WSIs will be saved in './test/thumbnails'.  
+The detection color maps will be saved in './test/output'.  
+The testing pipeline will process every WSI placed inside the './test/input' folder. The slide will be detected as a LUAD, LUSC or benign sample.   
 
 ## Training on your own datasets
 You could modify train_tcga.py to easily let it work with your datasets. After you have trained your embedder, you will need to compute the features and organize them as:  
@@ -100,7 +128,7 @@ You could modify train_tcga.py to easily let it work with your datasets. After y
 4. Configure the corresponding number of classes argument for creating the DSMIL model.
 5. Start training.  
 ```
-  $ python train_tcga.py --simclr=1
+  $ python train_tcga.py --new_features=1
 ```
 
 ## Citation
