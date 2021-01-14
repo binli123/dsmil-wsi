@@ -41,7 +41,7 @@ def main():
         download_url('https://uwmadison.box.com/shared/static/tze4yqclajbdzjwxyb8b1umfwk9vcdwq.zip', 'tcga-dataset.zip')
         unzip_data('tcga-dataset.zip', 'datasets')
         os.remove('tcga-dataset.zip')
-    if args.dataset == "tcga_test":
+    if args.dataset == "tcga-test":
         print('downloading TCGA Lung Cancer testing datasets')
         download_url('https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip', 'tcga-dataset-test.zip')
         unzip_data('tcga-dataset-test.zip', 'test/input')
