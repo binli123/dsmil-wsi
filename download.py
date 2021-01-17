@@ -46,6 +46,9 @@ def main():
         download_url('https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip', 'tcga-dataset-test.zip')
         unzip_data('tcga-dataset-test.zip', 'test/input')
         os.remove('tcga-dataset-test.zip')
+        download_url('https://uwmadison.box.com/shared/static/grxja488s4i07h9wo3tm4sj6t4nqtz0b.zip', 'test-weights.zip')
+        unzip_data('test-weights.zip', 'test/weights')
+        os.remove('test-weights.zip')
     
 if __name__ == '__main__':
     main()
