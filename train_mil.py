@@ -145,7 +145,7 @@ def main():
     bag_ins_list = shuffle(bag_ins_list)
     
     ### check both classes exist in testing bags
-    valid_bags = 0
+    valid_bags = 1
     while(valid_bags):
         bag_ins_list = shuffle(bag_ins_list)
         for k in range (0, args.cv_fold):
@@ -154,7 +154,7 @@ def main():
             for i, data in enumerate(test_list):
                 bag_labels = np.clip(data[0], 0, 1) + bag_labels
             if bag_labels > 0:
-                valid_bags = 1         
+                valid_bags = 0         
     
     acs = []
     print('Dataset: ' + args.datasets)
