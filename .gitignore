@@ -10,3 +10,4 @@ weights/
 */__pycache__/*
 __pycache__
 *.ipynb
+deep_zoom_test_files/
