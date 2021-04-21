@@ -134,11 +134,11 @@ You could modify train_tcga.py to easily let it work with your datasets. After y
 ## Citation
 If you use the code or results in your research, please use the following BibTeX entry.  
 ```
-@article{li2020dualstream,
-  author =   {Bin Li and Yin Li and Kevin W. Eliceiri},
-  title =    {Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning},
-  journal =  {arXiv preprint arXiv:2011.08939},
-  year =     {2020}
+@article{li2020dual,
+  title={Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning},
+  author={Li, Bin and Li, Yin and Eliceiri, Kevin W},
+  journal={arXiv preprint arXiv:2011.08939},
+  year={2020}
 }
 
 
