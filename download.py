@@ -19,8 +19,7 @@ def download_url(url, output_path):
         urllib.request.urlretrieve(url, filename=output_path, reporthook=t.update_to)
         
 def unzip_data(zip_path, data_path):
-    if os.path.exists(data_path): shutil.rmtree(data_path) 
-    os.mkdir(data_path)
+    os.mkdir(data_path, exist_ok=True)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(data_path)
     
