@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 from collections import OrderedDict
+from sklearn.utils import shuffle
 
 
 
@@ -82,10 +83,10 @@ def main():
     parser.add_argument('--num_feats', default=512, type=int, help='Feature size')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader')
     parser.add_argument('--num_workers', default=0, type=int, help='Number of threads for datalodaer')
-    parser.add_argument('--dataset', default='wsi-tcga-lung', type=str, help='Nanme of dataset')
     parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone')
-    parser.add_argument('--magnification', default='20x', type=str, help='Magnification to compute features')
+    parser.add_argument('--magnification', default='10x', type=str, help='Magnification to compute features')
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
+    parser.add_argument('--dataset', default='TCGA-lung-single', type=str, help='Dataset folder name')
     args = parser.parse_args()
     
     if args.backbone == 'resnet18':
@@ -128,14 +129,43 @@ def main():
         new_state_dict[name] = v
     i_classifier.load_state_dict(new_state_dict, strict=False)
     
-    if args.dataset == 'wsi-tcga-lung':
+    if args.dataset == 'TCGA-lung':
         bags_path = os.path.join('WSI', 'TCGA-lung', 'pyramid', '*', '*')
-    if args.dataset == 'wsi-tcga-lung-single':
+        feats_path = os.path.join('datasets', 'wsi-tcga-lung')
+    if args.dataset == 'TCGA-lung-single':
         bags_path = os.path.join('WSI', 'TCGA-lung', 'single', '*', '*')
-    feats_path = os.path.join('datasets', 'wsi-tcga-lung')
+        feats_path = os.path.join('datasets', 'wsi-tcga-lung')
+    else:
+        bags_path = os.path.join('WSI', args.dataset, 'single', '*', '*')
+        feats_path = os.path.join('datasets', args.dataset)
     os.makedirs(feats_path, exist_ok=True)
     bags_list = glob.glob(bags_path)
     compute_feats(args, bags_list, i_classifier, feats_path)
+    if args.dataset == 'TCGA-lung-single' or args.dataset == 'TCGA-lung':
+        luad_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUAD'+os.sep+'*.csv')
+        lusc_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUSC'+os.sep+'*.csv')
+        luad_df = pd.DataFrame(luad_list)
+        luad_df['label'] = 0
+        luad_df.to_csv('datasets/wsi-tcga-lung/LUAD.csv', index=False)        
+        lusc_df = pd.DataFrame(lusc_list)
+        lusc_df['label'] = 1
+        lusc_df.to_csv('datasets/wsi-tcga-lung/LUSC.csv', index=False)        
+        bags_path = luad_df.append(lusc_df, ignore_index=True)
+        bags_path = shuffle(bags_path)
+        bags_path.to_csv('datasets/wsi-tcga-lung/TCGA.csv', index=False)
+        bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
+    else:
+        n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
+        all_df = []
+        for i, item in enumerate(n_classes):
+            bag_csvs = glob.glob(os.path.join(item, '*.csv'))
+            bag_df = pd.DataFrame(bag_csvs)
+            bag_df['label'] = i
+            bag_df.to_csv(os.path.join('datasets', args.dataset, item.split(os.path.sep)[2]+'.csv'), index=False)
+            all_df.append(bag_df)
+        bags_path = pd.concat(all_df, axis=0, ignore_index=True)
+        bags_path = shuffle(bags_path)
+        bags_path.to_csv(os.path.join('datasets', args.dataset, args.dataset+'.csv'), index=False)
     
 if __name__ == '__main__':
     main()

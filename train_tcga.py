@@ -115,6 +115,7 @@ def main():
     parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
     parser.add_argument('--new_features', default=0, type=int, help='Use newly trained features 1/0(on/off)')
+    parser.add_argument('--dataset', default='TCGA-lung', type=str, help='Dataset folder name')
     args = parser.parse_args()
     
     
@@ -126,21 +127,14 @@ def main():
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epochs, 0.000005)
     
-    if args.new_features == 0:
-        bags_csv = 'datasets/tcga-dataset/TCGA.csv'
+    if args.dataset == 'TCGA-lung':
+        if args.new_features == 0:
+            bags_csv = 'datasets/tcga-dataset/TCGA.csv'
+        else:
+            bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
     else:
-        luad_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUAD'+os.sep+'*.csv')
-        lusc_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUSC'+os.sep+'*.csv')
-        luad_df = pd.DataFrame(luad_list)
-        luad_df['label'] = 0
-        luad_df.to_csv('datasets/wsi-tcga-lung/LUAD.csv', index=False)        
-        lusc_df = pd.DataFrame(lusc_list)
-        lusc_df['label'] = 1
-        lusc_df.to_csv('datasets/wsi-tcga-lung/LUSC.csv', index=False)        
-        bags_path = luad_df.append(lusc_df, ignore_index=True)
-        bags_path = shuffle(bags_path)
-        bags_path.to_csv('datasets/wsi-tcga-lung/TCGA.csv', index=False)
-        bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
+        bags_csv = os.path.join('datasets', args.dataset, args.dataset+'.csv')
+            
         
     bags_path = pd.read_csv(bags_csv)
     train_path = bags_path.iloc[0:int(len(bags_path)*0.8), :]
@@ -154,15 +148,23 @@ def main():
         test_path = shuffle(test_path).reset_index(drop=True)
         train_loss_bag = train(train_path, milnet, criterion, optimizer, args) # iterate all bags
         test_loss_bag, avg_score, aucs, thresholds_optimal = test(test_path, milnet, criterion, optimizer, args)
-        print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, auc_LUAD: %.4f, auc_LUSC: %.4f' % 
-              (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
+        if args.dataset=='TCGA-lung':
+            print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, auc_LUAD: %.4f, auc_LUSC: %.4f' % 
+                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
+        else:
+            print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, average_AUC: %.4f' % 
+                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, np.mean(aucs)))
         scheduler.step()
         current_score = (aucs[0] + aucs[1] + avg_score + 1 - test_loss_bag)/4
         if current_score >= best_score:
             best_score = current_score
             save_name = os.path.join(save_path, str(run+1)+'.pth')
             torch.save(milnet.state_dict(), save_name)
-            print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
+            if args.dataset=='TCGA-lung':
+                print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
+            else:
+                print('Best model saved at: ' + save_name)
+                print('\n Best thresholds: '.join('class {}: {}'.format(*k) for k in enumerate(aucs)))
             
 
 if __name__ == '__main__':

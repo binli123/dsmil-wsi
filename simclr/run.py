@@ -5,25 +5,29 @@ import os, glob
 import pandas as pd
 import argparse
 
-def generate_csv(level='20x'):
-    if level=='20x':
-        patch_path = glob.glob('../WSI/TCGA-lung/pyramid/*/*/*/*.jpg') # /class_name/bag_name/5x_name/*.jpg
-    if level='5x':
-        patch_path = glob.glob('../WSI/TCGA-lung/pyramid/*/*/*.jpg') # /class_name/bag_name/*.jpg
-    if level='10x':
-        patch_path = glob.glob('../WSI/TCGA-lung/single/*/*/*.jpg') # /class_name/bag_name/*.jpg
+def generate_csv(args):
+    if args.magnification=='20x':
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*', '*.jpg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/5x_name/*.jpg
+    if args.magnification=='5x':
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*.jpg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
+    if args.magnification=='10x':
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'single', '*', '*', '*.jpg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
     df = pd.DataFrame(patch_path)
     df.to_csv('all_patches.csv', index=False)
         
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--magnification', type=str, default='20x')
+    parser.add_argument('--magnification', type=str, default='10x', help='Magnification to compute embedder')
+    parser.add_argument('--dataset', type=str, default='TCGA-lung', help='Dataset folder name')
     args = parser.parse_args()
     config = yaml.load(open("config.yaml", "r"), Loader=yaml.FullLoader)
     dataset = DataSetWrapper(config['batch_size'], **config['dataset'])
     
-    generate_csv(args.magnification)
+    generate_csv(args)
     simclr = SimCLR(dataset, config)
     simclr.train()
 
