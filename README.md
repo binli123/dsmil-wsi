@@ -77,7 +77,7 @@ The raw WSIs take about 1TB of disc space and may take several days to download.
   $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUSC.txt --config config-LUSC.dtt
 ```
 >The data will be saved in `./WSI/TCGA-lung`. Please check [details](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) regarding the use of TCGA data portal. Otherwise, individual WSIs can be download manually in GDC data portal [repository](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D)  
->**From Google Drive.** The svs files are [uploaded](https://drive.google.com/drive/folders/1UobMSqJEqINX2izxrwbgprugjlTporSQ?usp=sharing). The dataset contains in total 1053 slides, including 512 LUSC and 541 LUAD. 10 low-quality LUAD slides are discarded. 
+>**From Google Drive.** The svs files are also [uploaded](https://drive.google.com/drive/folders/1UobMSqJEqINX2izxrwbgprugjlTporSQ?usp=sharing). The dataset contains in total 1053 slides, including 512 LUSC and 541 LUAD. 10 low-quality LUAD slides are discarded. 
 
 **Prepare the patches.**  
 >We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
@@ -115,7 +115,8 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 ```
 
 ## Training on your own datasets
-1. Place WSI files into `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`.  
+1. Place WSI files into `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`. 
+> For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at the last index when sorted alphabetically. The naming does not matter if you do not have a negative class.
 2. Crop patches.  
 ```
   $ python WSI_cropping.py --dataset=[DATASET_NAME]
@@ -149,6 +150,10 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 <div align="center">
   <img src="thumbnails/bags.png" width="700px" />
 </div>  
+
+3. Labels.
+> For binary classifier, use `1` for positive bagd and `0` for negative bagd. Use `--num_classes=1` at training.  
+> For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive** classes) at training.
 
 
 ## Citation

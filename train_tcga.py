@@ -24,7 +24,12 @@ def get_bag_feats(csv_file_df, args):
     feats = shuffle(df).reset_index(drop=True)
     feats = feats.to_numpy()
     label = np.zeros(args.num_classes)
-    label[int(csv_file_df.iloc[1])] = 1
+    if args.num_classes==1:
+        label[0] = csv_file_df.iloc[1]
+    else:
+        if int(csv_file_df.iloc[1])<=(len(label)-1):
+            label[int(csv_file_df.iloc[1])] = 1
+        
     return label, feats
 
 def train(train_df, milnet, criterion, optimizer, args):
@@ -91,6 +96,8 @@ def multi_label_roc(labels, predictions, num_classes, pos_label=1):
     thresholds = []
     thresholds_optimal = []
     aucs = []
+    if len(predictions.shape)==1:
+        predictions = predictions[:, None]
     for c in range(0, num_classes):
         label = labels[:, c]
         prediction = predictions[:, c]
@@ -114,7 +121,7 @@ def main():
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
     parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
-    parser.add_argument('--new_features', default=0, type=int, help='Use newly trained features 1/0(on/off)')
+    parser.add_argument('--new_features', default=0, type=int, help='Use newly trained features 1/0 (on/off)')
     parser.add_argument('--dataset', default='TCGA-lung', type=str, help='Dataset folder name')
     args = parser.parse_args()
     
