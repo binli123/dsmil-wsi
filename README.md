@@ -136,7 +136,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 ```
   $ python train_tcga.py --dataset=[DATASET_NAME] --new_features=1
 ```
->You will need to adjust `--num_classes` option if the dataset contains more than 2 positive classes or only 1 positive class.  
+>You will need to adjust `--num_classes` option if the dataset contains more than 2 positive classes or only 1 positive class. See the next section for details.  
   
 ## Feature vector csv files explanation
 1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_/_category_/".  
@@ -152,7 +152,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 </div>  
 
 3. Labels.
-> For binary classifier, use `1` for positive bagd and `0` for negative bagd. Use `--num_classes=1` at training.  
+> For binary classifier, use `1` for positive bags and `0` for negative bags. Use `--num_classes=1` at training.  
 > For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive** classes) at training.
 
 
