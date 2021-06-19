@@ -16,7 +16,7 @@ from collections import OrderedDict
 import dsmil as mil
 
 def get_bag_feats(csv_file_df, args):
-    if args.new_features == 0:
+    if args.dataset == 'TCGA-lung-default':
         feats_csv_path = 'datasets/tcga-dataset/tcga_lung_data_feats/' + csv_file_df.iloc[0].split('/')[1] + '.csv'
     else:
         feats_csv_path = csv_file_df.iloc[0]
@@ -121,8 +121,7 @@ def main():
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
     parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
-    parser.add_argument('--new_features', default=0, type=int, help='Use newly trained features 1/0 (on/off)')
-    parser.add_argument('--dataset', default='TCGA-lung', type=str, help='Dataset folder name')
+    parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
     args = parser.parse_args()
     
     
@@ -134,11 +133,8 @@ def main():
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epochs, 0.000005)
     
-    if args.dataset == 'TCGA-lung':
-        if args.new_features == 0:
-            bags_csv = 'datasets/tcga-dataset/TCGA.csv'
-        else:
-            bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
+    if args.dataset == 'TCGA-lung-defualt':
+        bags_csv = 'datasets/tcga-dataset/TCGA.csv'
     else:
         bags_csv = os.path.join('datasets', args.dataset, args.dataset+'.csv')
             
@@ -171,7 +167,7 @@ def main():
                 print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
             else:
                 print('Best model saved at: ' + save_name)
-                print('\n Best thresholds: '.join('class {}: {}'.format(*k) for k in enumerate(aucs)))
+                print('\n Best thresholds >>> '+ ' | '.join('class {}:{}'.format(*k) for k in enumerate(aucs)))
             
 
 if __name__ == '__main__':

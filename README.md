@@ -45,7 +45,7 @@ This dataset requires 20GB of free disk space.
 ### TCGA lung datasets
 >Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
  ```
-  $ python train_tcga.py --new_features=0
+  $ python train_tcga.py --dataset=TCGA-lung-default
 ```
 ## Testing on TCGA lung dataset
 >We provided a testing pipeline for several sample slides. The slides can be downloaded via:  
@@ -79,6 +79,9 @@ The raw WSIs take about 1TB of disc space and may take several days to download.
 >The data will be saved in `./WSI/TCGA-lung`. Please check [details](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) regarding the use of TCGA data portal. Otherwise, individual WSIs can be download manually in GDC data portal [repository](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D)  
 >**From Google Drive.** The svs files are also [uploaded](https://drive.google.com/drive/folders/1UobMSqJEqINX2izxrwbgprugjlTporSQ?usp=sharing). The dataset contains in total 1053 slides, including 512 LUSC and 541 LUAD. 10 low-quality LUAD slides are discarded. 
 
+**Sort svs files in the folder.**
+Separate LUAD and LUSC slides according to the IDs and place the files into folder `WSI/TCGA-lung/LUAD` or `WSI/TCGA-lung/LUSC`.  
+
 **Prepare the patches.**  
 >We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
 >The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Run:  
@@ -92,60 +95,72 @@ The raw WSIs take about 1TB of disc space and may take several days to download.
 
 **Train the embedder.**  
 >We provided a modified script from this repository [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) For training the embedder.  
-Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu(s). We recommend using a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.
+Navigate to './simclr' and edit the attributes in the configuration file 'config.yaml'. You will need to determine a batch size that fits your gpu(s). We recommend using a batch size of at least 512 to get good simclr features. The trained model weights and loss log are saved in folder './simclr/runs'.  
+>If patches are cropped in single magnification.  
 ```
   cd simclr
   $ python run.py
 ```
+>If patches are cropped in multiple magnifications, the embedder for each magnification need to be trained separately to achieve better results.  
+```
+  $ python run.py --multiscale=1 --level=0
+  $ python run.py --multiscale=1 --level=1
+```
 
 **Compute the features.**  
->Compute the features for 20x magnification:  
+>Compute the features for single magnification:  
 ```
   $ cd ..
-  $ python compute_feats.py --dataset=wsi-tcga-lung
+  $ python compute_feats.py --dataset=TCGA-lung
 ```
->Or, compute the features for 10x magnification:  
+>The last trained embedder will be used by default. To use a specific embedder, set the option `--weights=[RUN_NAME]`, where `[RUN_NAME]` is a folder name inside `simclr/runs/`. 
+>Or, compute the features for multiple magnifications:  
 ```
-  $ python compute_feats.py --dataset=wsi-tcga-lung-single --magnification=10x
+  $ python compute_feats.py --dataset=TCGA-lung --magnification=tree
 ```
+To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification).    
 
 **Start training.**  
 ```
-  $ python train_tcga.py --new_features=1
+  $ python train_tcga.py --dataset=TCGA-lung
 ```
 
 ## Training on your own datasets
-1. Place WSI files into `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`. 
-> For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at the last index when sorted alphabetically. The naming does not matter if you do not have a negative class.
+1. Place WSI files as `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`. 
+> For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at *the last index* when sorted alphabetically. The naming of the class folders does not matter if you do not have a negative class.
 2. Crop patches.  
 ```
   $ python WSI_cropping.py --dataset=[DATASET_NAME]
 ```
+>Set flag `--multiscale=1` to crop patches from multiple magnifications. 
 3. Train an embedder.  
 ```
   $ cd simclr
   $ python run.py --dataset=[DATASET_NAME]
 ```
+>Set flag `--multiscale=1` and flag `--level=0` or `--level=1` to train embedders for each magnification if the patches are cropped from multiple magnifications.   
 4. Compute features using the embedder.  
 ```
   $ cd ..
   $ python compute_feats.py --dataset=[DATASET_NAME]
 ```
->This will use the last trained embedder to compute the features, if you want to use an embedder from a specific run, add the option `--weights=[RUN_NAME]`, where `[RUN_NAME]` is a folder name inside `simclr/runs/`. If you have an embedder you want to use, you can place the weight file as `simclr/runs/[FOLDER_NAME]/checkpoints/model.pth` and pass the `[FOLDER_NAME]` to this option. The embedder architecture is ResNet18.    
+>Set flag `--magnification=tree` to compute the features for multiple magnifications.
+>This will use the last trained embedder to compute the features, if you want to use an embedder from a specific run, add the option `--weights=[RUN_NAME]`, where `[RUN_NAME]` is a folder name inside `simclr/runs/`. If you have an embedder you want to use, you can place the weight file as `simclr/runs/[RUN_NAME]/checkpoints/model.pth` and pass the `[RUN_NAME]` to this option. To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification). The embedder architecture is ResNet18.     
+
 5. Training.
 ```
-  $ python train_tcga.py --dataset=[DATASET_NAME] --new_features=1
+  $ python train_tcga.py --dataset=[DATASET_NAME]
 ```
->You will need to adjust `--num_classes` option if the dataset contains more than 2 positive classes or only 1 positive class. See the next section for details.  
+>You will need to adjust `--num_classes` option if the dataset contains more than 2 positive classes or only 1 positive class and 1 negative class (binary classifier). See the next section for details.  
   
 ## Feature vector csv files explanation
-1. For each bag, generate a .csv file where each row contains the feature of an instance. The .csv file should be named as "_bagID_.csv" and put into a folder named "_dataset-name_/_category_/".  
+1. For each bag, there is a .csv file where each row contains the feature of an instance. The .csv is named as "_bagID_.csv" and put into a folder named "_dataset-name_/_category_/".  
 
 <div align="center">
   <img src="thumbnails/bag.png" width="700px" />
 </div>  
 
-2. Generate a "_dataset-name_.csv" file with two columns where the first column contains the paths to all _bagID_.csv files, and the second column contains the bag labels.  
+2. There is a "_dataset-name_.csv" file with two columns where the first column contains the paths to all _bagID_.csv files, and the second column contains the bag labels.  
 
 <div align="center">
   <img src="thumbnails/bags.png" width="700px" />
@@ -153,7 +168,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 
 3. Labels.
 > For binary classifier, use `1` for positive bags and `0` for negative bags. Use `--num_classes=1` at training.  
-> For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive** classes) at training.
+> For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive classes**) at training.
 
 
 ## Citation
