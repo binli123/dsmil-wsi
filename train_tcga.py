@@ -133,11 +133,10 @@ def main():
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epochs, 0.000005)
     
-    if args.dataset == 'TCGA-lung-defualt':
+    if args.dataset == 'TCGA-lung-default':
         bags_csv = 'datasets/tcga-dataset/TCGA.csv'
     else:
         bags_csv = os.path.join('datasets', args.dataset, args.dataset+'.csv')
-            
         
     bags_path = pd.read_csv(bags_csv)
     train_path = bags_path.iloc[0:int(len(bags_path)*0.8), :]
@@ -155,8 +154,8 @@ def main():
             print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, auc_LUAD: %.4f, auc_LUSC: %.4f' % 
                   (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
         else:
-            print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, average_AUC: %.4f' % 
-                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, np.mean(aucs)))
+            print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, AUC: ' % 
+                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score) + '|'.join('class {}:{}'.format(*k) for k in enumerate(aucs))) 
         scheduler.step()
         current_score = (aucs[0] + aucs[1] + avg_score + 1 - test_loss_bag)/4
         if current_score >= best_score:
@@ -167,7 +166,7 @@ def main():
                 print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
             else:
                 print('Best model saved at: ' + save_name)
-                print('\n Best thresholds >>> '+ ' | '.join('class {}:{}'.format(*k) for k in enumerate(aucs)))
+                print('\n Best thresholds >>> '+ ' | '.join('class {}:{}'.format(*k) for k in enumerate(thresholds_optimal)))
             
 
 if __name__ == '__main__':

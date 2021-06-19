@@ -138,7 +138,7 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
   $ cd simclr
   $ python run.py --dataset=[DATASET_NAME]
 ```
->Set flag `--multiscale=1` and flag `--level=0` or `--level=1` to train embedders for each magnification if the patches are cropped from multiple magnifications.   
+>Set flag `--multiscale=1` and flag `--level=0` or `--level=1` to train an embedder for each magnification if the patches are cropped from multiple magnifications.   
 4. Compute features using the embedder.  
 ```
   $ cd ..
