@@ -2,6 +2,7 @@ datasets/
 mnist_bag/
 WSI/
 simclr/runs
+simclr/all_patches.csv
 test/
 weights/
 .ipynb_checkpoints

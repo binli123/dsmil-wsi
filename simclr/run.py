@@ -6,13 +6,13 @@ import pandas as pd
 import argparse
 
 def generate_csv(args):
-    if args.level==1 and arg.multiscale==1:
+    if args.level==1 and args.multiscale==1:
         path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*', '*.jpg')
         patch_path = glob.glob(path_temp) # /class_name/bag_name/5x_name/*.jpg
-    if args.level==0 and arg.multiscale==1:
+    if args.level==0 and args.multiscale==1:
         path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*.jpg')
         patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
-    if arg.multiscale==0:
+    if args.multiscale==0:
         path_temp = os.path.join('..', 'WSI', args.dataset, 'single', '*', '*', '*.jpg')
         patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
     df = pd.DataFrame(patch_path)
