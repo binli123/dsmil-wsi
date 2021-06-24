@@ -61,10 +61,10 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-        if  args.magnification == '20x':
-            csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpg'))
-        if args.magnification == '5x' or args.magnification == '10x':
-            csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg'))
+        if  args.magnification == 'high':
+            csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpeg'))
+        if args.magnification == 'low':
+            csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
@@ -84,7 +84,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
     Tensor = torch.FloatTensor
     with torch.no_grad():
         for i in range(0, num_bags):
-            low_patches = glob.glob(os.path.join(bags_list[i], '*.jpg'))
+            low_patches = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
             feats_list = []
             feats_tree_list = []
             dataloader, bag_size = bag_dataset(args, low_patches)
@@ -94,7 +94,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
             for idx, low_patch in enumerate(low_patches):
-                high_patches = glob.glob(low_patch.replace('.jpg', os.sep+'*.jpg'))
+                high_patches = glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpeg'))
                 if len(high_patches) == 0:
                     pass
                 else:
@@ -214,24 +214,11 @@ def main():
         
     os.makedirs(feats_path, exist_ok=True)
     bags_list = glob.glob(bags_path)
-    if args.magnification == 'tree':
-        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
-    else:
-        compute_feats(args, bags_list, i_classifier, feats_path)
-#     if args.dataset == 'TCGA-lung-single' or args.dataset == 'TCGA-lung':
-#         luad_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUAD'+os.sep+'*.csv')
-#         lusc_list = glob.glob('datasets'+os.sep+'wsi-tcga-lung'+os.sep+'LUSC'+os.sep+'*.csv')
-#         luad_df = pd.DataFrame(luad_list)
-#         luad_df['label'] = 0
-#         luad_df.to_csv('datasets/wsi-tcga-lung/LUAD.csv', index=False)        
-#         lusc_df = pd.DataFrame(lusc_list)
-#         lusc_df['label'] = 1
-#         lusc_df.to_csv('datasets/wsi-tcga-lung/LUSC.csv', index=False)        
-#         bags_path = luad_df.append(lusc_df, ignore_index=True)
-#         bags_path = shuffle(bags_path)
-#         bags_path.to_csv('datasets/wsi-tcga-lung/TCGA.csv', index=False)
-#         bags_csv = 'datasets/wsi-tcga-lung/TCGA.csv'
+
+#     if args.magnification == 'tree':
+#         compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
 #     else:
+#         compute_feats(args, bags_list, i_classifier, feats_path)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
     sorted(n_classes)
     all_df = []

@@ -1,6 +1,7 @@
 datasets/
 mnist_bag/
 WSI/
+WSI_temp_files/
 simclr/runs
 simclr/all_patches.csv
 test/

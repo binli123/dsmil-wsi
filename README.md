@@ -84,13 +84,13 @@ Separate LUAD and LUSC slides according to the IDs and place the files into fold
 
 **Prepare the patches.**  
 >We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
->The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for the magnifications of 20x and 5x. Run:  
+>The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for two magnification levels. The first magnification level is level 0, which corroesponds to 40x. For example, to extract patches at 20x (level 1) and 5x (level 3) magnifications, run:  
 ```
-  $ python WSI_cropping.py --multiscale=1
+  $ python deepzoom_tiler.py -m 1 3
 ```
->Or, the patches could be cropped at a single magnification of 10x and saved in './WSI/TCGA-lung/single' by using:  
+>Or, the patches could be cropped at a single level magnification and saved in './WSI/TCGA-lung/single'. For example, extract patches at 10x magnification:  
 ```
-  $ python WSI_cropping.py --multiscale=0
+  $ python deepzoom_tiler.py -m 2
 ```
 
 **Train the embedder.**  
@@ -103,8 +103,8 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 ```
 >If patches are cropped in multiple magnifications, the embedder for each magnification need to be trained separately to achieve better results.  
 ```
-  $ python run.py --multiscale=1 --level=0
-  $ python run.py --multiscale=1 --level=1
+  $ python run.py --multiscale=1 --level=low
+  $ python run.py --multiscale=1 --level=high
 ```
 
 **Compute the features.**  
@@ -127,25 +127,25 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 
 ## Training on your own datasets
 1. Place WSI files as `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`. 
-> For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at *the last index* when sorted alphabetically. The naming of the class folders does not matter if you do not have a negative class.
+> For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at **the last index** when sorted alphabetically. The naming of the class folders does not matter if you do not have a negative class.
 2. Crop patches.  
 ```
-  $ python WSI_cropping.py --dataset=[DATASET_NAME]
+  $ python deepzoom_tiler.py -m 2 -d [DATASET_NAME]
 ```
->Set flag `--multiscale=1` to crop patches from multiple magnifications. 
+>Set flag `-m [LEVEL 1] [LEVEL 2]` to crop patches from multiple magnifications. 
 3. Train an embedder.  
 ```
   $ cd simclr
   $ python run.py --dataset=[DATASET_NAME]
 ```
->Set flag `--multiscale=1` and flag `--level=0` or `--level=1` to train an embedder for each magnification if the patches are cropped from multiple magnifications.   
+>Set flag `--multiscale=1` and flag `--level=low` or `--level=high` to train an embedder for each magnification if the patches are cropped from multiple magnifications.   
 4. Compute features using the embedder.  
 ```
   $ cd ..
   $ python compute_feats.py --dataset=[DATASET_NAME]
 ```
 >Set flag `--magnification=tree` to compute the features for multiple magnifications.
->This will use the last trained embedder to compute the features, if you want to use an embedder from a specific run, add the option `--weights=[RUN_NAME]`, where `[RUN_NAME]` is a folder name inside `simclr/runs/`. If you have an embedder you want to use, you can place the weight file as `simclr/runs/[RUN_NAME]/checkpoints/model.pth` and pass the `[RUN_NAME]` to this option. To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification). The embedder architecture is ResNet18.     
+>This will use the last trained embedder to compute the features, if you want to use an embedder from a specific run, add the option `--weights=[RUN_NAME]`, where `[RUN_NAME]` is a folder name inside `simclr/runs/`. If you have an embedder you want to use, you can place the weight file as `simclr/runs/[RUN_NAME]/checkpoints/model.pth` and pass the `[RUN_NAME]` to this option. To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification). The embedder architecture is ResNet18 with **instance normalization**.     
 
 5. Training.
 ```
@@ -174,11 +174,13 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 ## Citation
 If you use the code or results in your research, please use the following BibTeX entry.  
 ```
-@article{li2020dual,
-  title={Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning},
-  author={Li, Bin and Li, Yin and Eliceiri, Kevin W},
-  journal={arXiv preprint arXiv:2011.08939},
-  year={2020}
+@InProceedings{Li_2021_CVPR,
+    author    = {Li, Bin and Li, Yin and Eliceiri, Kevin W.},
+    title     = {Dual-Stream Multiple Instance Learning Network for Whole Slide Image Classification With Self-Supervised Contrastive Learning},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2021},
+    pages     = {14318-14328}
 }
 
 

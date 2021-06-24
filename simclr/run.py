@@ -6,10 +6,10 @@ import pandas as pd
 import argparse
 
 def generate_csv(args):
-    if args.level==1 and args.multiscale==1:
+    if args.level=='high' and args.multiscale==1:
         path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*', '*.jpg')
         patch_path = glob.glob(path_temp) # /class_name/bag_name/5x_name/*.jpg
-    if args.level==0 and args.multiscale==1:
+    if args.level=='low' and args.multiscale==1:
         path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*.jpg')
         patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
     if args.multiscale==0:
@@ -21,7 +21,7 @@ def generate_csv(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--level', type=int, default=0, help='Magnification level to compute embedder (0/1)')
+    parser.add_argument('--level', type=str, default='low', help='Magnification level to compute embedder (low/high)')
     parser.add_argument('--multiscale', type=int, default=0, help='Whether the patches are cropped from multiscale (0/1-no/yes)')
     parser.add_argument('--dataset', type=str, default='TCGA-lung', help='Dataset folder name')
     args = parser.parse_args()

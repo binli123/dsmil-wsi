@@ -51,7 +51,7 @@ def train(train_df, milnet, criterion, optimizer, args):
         loss.backward()
         optimizer.step()
         total_loss = total_loss + loss.item()
-        sys.stdout.write('\r Bag [%d/%d] bag loss: %.4f' % (i, len(train_df), loss.item()))
+        sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(train_df), loss.item()))
     return total_loss / len(train_df)
 
 def test(test_df, milnet, criterion, optimizer, args):
@@ -72,7 +72,7 @@ def test(test_df, milnet, criterion, optimizer, args):
             max_loss = criterion(max_prediction.view(1, -1), bag_label.view(1, -1))
             loss = 0.5*bag_loss + 0.5*max_loss
             total_loss = total_loss + loss.item()
-            sys.stdout.write('\r Bag [%d/%d] bag loss: %.4f' % (i, len(test_df), loss.item()))
+            sys.stdout.write('\r Testing bag [%d/%d] bag loss: %.4f' % (i, len(test_df), loss.item()))
             test_labels.extend([label])
             test_predictions.extend([(0.0*torch.sigmoid(max_prediction)+1.0*torch.sigmoid(bag_prediction)).squeeze().cpu().numpy()])
     test_labels = np.array(test_labels)
@@ -155,7 +155,7 @@ def main():
                   (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
         else:
             print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, AUC: ' % 
-                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score) + '|'.join('class {}:{}'.format(*k) for k in enumerate(aucs))) 
+                  (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score) + '|'.join('class-{}>>{}'.format(*k) for k in enumerate(aucs))) 
         scheduler.step()
         current_score = (aucs[0] + aucs[1] + avg_score + 1 - test_loss_bag)/4
         if current_score >= best_score:
@@ -166,7 +166,7 @@ def main():
                 print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
             else:
                 print('Best model saved at: ' + save_name)
-                print('\n Best thresholds >>> '+ ' | '.join('class {}:{}'.format(*k) for k in enumerate(thresholds_optimal)))
+                print('Best thresholds ===>>> '+ '|'.join('class-{}>>{}'.format(*k) for k in enumerate(thresholds_optimal)))
             
 
 if __name__ == '__main__':
