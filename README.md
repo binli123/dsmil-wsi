@@ -84,7 +84,7 @@ Separate LUAD and LUSC slides according to the IDs and place the files into fold
 
 **Prepare the patches.**  
 >We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
->The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for two magnification levels. The first magnification level is level 0, which corroesponds to 40x. For example, to extract patches at 20x (level 1) and 5x (level 3) magnifications, run:  
+>The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for two magnification levels. The first magnification level is level 0, which corresponds to 40x. For example, to extract patches at 20x (level 1) and 5x (level 3) magnifications, run:  
 ```
   $ python deepzoom_tiler.py -m 1 3
 ```
@@ -101,7 +101,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
   cd simclr
   $ python run.py
 ```
->If patches are cropped in multiple magnifications, the embedder for each magnification need to be trained separately to achieve better results.  
+>If patches are cropped in multiple magnifications, the embedder for each magnification needs to be trained separately to achieve better results.  
 ```
   $ python run.py --multiscale=1 --level=low
   $ python run.py --multiscale=1 --level=high
@@ -168,7 +168,7 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 
 3. Labels.
 > For binary classifier, use `1` for positive bags and `0` for negative bags. Use `--num_classes=1` at training.  
-> For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive classes**) at training.
+> For multi-class classifier (`N` positive classes and one optional negative class), use `0~(N-1)` for positive classes. If you have a negative class (not belonging to any one of the positive classes), use `N` for its label. Use `--num_classes=N` (`N` equals the number of **positive classes**) at training.
 
 
 ## Citation
