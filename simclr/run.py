@@ -26,8 +26,9 @@ def main():
     parser.add_argument('--dataset', type=str, default='TCGA-lung', help='Dataset folder name')
     args = parser.parse_args()
     config = yaml.load(open("config.yaml", "r"), Loader=yaml.FullLoader)
-    dataset = DataSetWrapper(config['batch_size'], **config['dataset'])
-    
+    gpu_ids = eval(config['gpu_ids'])
+    os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)   
+    dataset = DataSetWrapper(config['batch_size'], **config['dataset'])   
     generate_csv(args)
     simclr = SimCLR(dataset, config)
     simclr.train()
