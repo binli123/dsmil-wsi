@@ -40,7 +40,7 @@ class TileWorker(Process):
     """A child process that generates and writes tiles."""
 
     def __init__(self, queue, slidepath, tile_size, overlap, limit_bounds,
-                quality):
+                quality, threshold):
         Process.__init__(self, name='TileWorker')
         self.daemon = True
         self._queue = queue
@@ -49,6 +49,7 @@ class TileWorker(Process):
         self._overlap = overlap
         self._limit_bounds = limit_bounds
         self._quality = quality
+        self._threshold = threshold
         self._slide = None
 
     def run(self):
@@ -69,7 +70,9 @@ class TileWorker(Process):
             edge = ImageStat.Stat(edge).sum
             edge = np.mean(edge)/(self._tile_size**2)
             w, h = tile.size
-            if edge > 15 and w==self._tile_size and h==self._tile_size:
+            if edge > self._threshold:
+                if not (w==self._tile_size and h==self._tile_size):
+                    tile = tile.resize((self._tile_size, self._tile_size))
                 tile.save(outfile, quality=self._quality)
             self._queue.task_done()
 
@@ -126,7 +129,7 @@ class DeepZoomStaticTiler(object):
     """Handles generation of tiles and metadata for all images in a slide."""
 
     def __init__(self, slidepath, basename, format, tile_size, overlap,
-                limit_bounds, quality, workers):
+                limit_bounds, quality, workers, threshold):
         self._slide = open_slide(slidepath)
         self._basename = basename
         self._format = format
@@ -138,7 +141,7 @@ class DeepZoomStaticTiler(object):
         self._dzi_data = {}
         for _i in range(workers):
             TileWorker(self._queue, slidepath, tile_size, overlap,
-                        limit_bounds, quality).start()
+                        limit_bounds, quality, threshold).start()
 
     def run(self):
         self._run_image()
@@ -182,19 +185,6 @@ class DeepZoomStaticTiler(object):
         for _i in range(self._workers):
             self._queue.put(None)
         self._queue.join()
-        
-def remove_background(thresh=0.05, level=(0,), patch_size=224):
-    n_levels = len(glob.glob('WSI_temp_files/*'))
-    patches = glob.glob(os.path.join('WSI_temp_files', str(n_levels-level[-1]-1), '*.jpeg'))
-    for i, patch in enumerate(patches):
-        img = io.imread(patch)
-        img = filters.sobel(img)
-        img = np.sum(img) / patch_size**2
-        if img <= thresh:           
-            os.remove(patch)
-        sys.stdout.write('\r Removing backgound patches [%d/%d]' % (i+1, len(patches)))
-    print('Done.')
-    
 
 def organize_patches(img_slide, out_base, level=(0,)):
     img_name = img_slide.split(os.sep)[-1].split('.')[0]
@@ -228,6 +218,11 @@ def organize_patches(img_slide, out_base, level=(0,)):
                     if len(high_patch)!=0:
                         high_patch = high_patch[0]
                         shutil.move(high_patch, os.path.join(bag_path, low_patch_folder, high_patch.split(os.sep)[-1]))
+            try:
+                os.rmdir(os.path.join(bag_path, low_patch_folder))
+                os.remove(low_patch)
+            except:
+                pass
             sys.stdout.write('\r Organizing patches [%d/%d]' % (i+1, len(low_patches)))
         print('Done.')
 
@@ -241,7 +236,8 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--workers', type=int, default=8, help='number of worker processes to start [4]')
     parser.add_argument('-q', '--quality', type=int, default=90, help='JPEG compression quality [90]')
     parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
-    parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=0, help='Levels for patch extraction [0]')  
+    parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=0, help='Levels for patch extraction [0]')
+    parser.add_argument('-t', '--background_t', type=int, default=30, help='Threshold for filtering background [25]')  
     args = parser.parse_args()
     levels = tuple(args.magnifications)
     assert len(levels)<=2, 'Only 1 or 2 magnifications are supported!'
@@ -256,7 +252,7 @@ if __name__ == '__main__':
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
-        DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers).run()
+        DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
         organize_patches(c_slide, out_base, levels)
         shutil.rmtree('WSI_temp_files')
     print('Patch extraction done for {} slides.'.format(len(all_slides)))
