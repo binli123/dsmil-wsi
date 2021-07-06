@@ -49,20 +49,6 @@ class BClassifier(nn.Module):
         A = torch.mm(Q, q_max.transpose(0, 1)) # compute inner product of Q to each entry of q_max, A in shape N x C, each column contains unnormalized attention scores
         A = F.softmax( A / torch.sqrt(torch.tensor(Q.shape[1], dtype=torch.float32, device=device)), 0) # normalize attention scores, A in shape N x C, 
         B = torch.mm(A.transpose(0, 1), V) # compute bag representation, B in shape C x V
-        
-        
-#         for i in range(c.shape[1]):
-#             _, indices = torch.sort(c[:, i], 0, True)         
-#             feats = torch.index_select(feats, 0, indices) # N x K, sorted
-#             q_max = self.q(feats[0].view(1, -1)) # 1 x 1 x Q
-#             temp = torch.mm(Q, q_max.view(-1, 1)) / torch.sqrt(torch.tensor(Q.shape[1], dtype=torch.float32, device=device))
-#             if i == 0:
-#                 A = F.softmax(temp, 0) # N x 1
-#                 B = torch.sum(torch.mul(A, V), 0).view(1, -1) # 1 x V
-#             else:
-#                 temp = F.softmax(temp, 0) # N x 1
-#                 A = torch.cat((A, temp), 1) # N x C
-#                 B = torch.cat((B, torch.sum(torch.mul(temp, V), 0).view(1, -1)), 0) # C x V -> 1 x C x V
                 
         B = B.view(1, B.shape[0], B.shape[1]) # 1 x C x V
         C = self.fcc(B) # 1 x C x 1

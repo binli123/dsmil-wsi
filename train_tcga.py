@@ -122,7 +122,7 @@ def main():
     parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs [40]')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
-    parser.add_argument('--split', default='training/validation split', type=float, help='training/validation split [0.2]')
+    parser.add_argument('--split', default=0.2, type=float, help='training/validation split [0.2]')
     args = parser.parse_args()
     
     
