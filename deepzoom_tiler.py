@@ -233,10 +233,11 @@ def organize_patches(img_slide, out_base, level=(0,)):
 
 if __name__ == '__main__':
     Image.MAX_IMAGE_PIXELS = None
-    parser = argparse.ArgumentParser(description='Train DSMIL on 20x patch features learned by SimCLR')
+    parser = argparse.ArgumentParser(description='Patch extraction for WSI')
     parser.add_argument('-d', '--dataset', type=str, default='TCGA-lung', help='Dataset name')
     parser.add_argument('-e', '--overlap', type=int, default=0, help='Overlap of adjacent tiles [0]')
     parser.add_argument('-f', '--format', type=str, default='jpeg', help='image format for tiles [jpeg]')
+    parser.add_argument('-v', '--slide_format', type=str, default='svs', help='image format for tiles [svs]')
     parser.add_argument('-j', '--workers', type=int, default=8, help='number of worker processes to start [4]')
     parser.add_argument('-q', '--quality', type=int, default=90, help='JPEG compression quality [90]')
     parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
@@ -249,13 +250,12 @@ if __name__ == '__main__':
         out_base = os.path.join('WSI', args.dataset, 'pyramid')
     else:
         out_base = os.path.join('WSI', args.dataset, 'single')
-    all_slides = glob.glob(os.path.join(path_base, '*/*.svs')) +  glob.glob(os.path.join(path_base, '*/*/*.svs'))
+    all_slides = glob.glob(os.path.join(path_base, '*/*.'+args.slide_format)) +  glob.glob(os.path.join(path_base, '*/*/*.'+args.slide_format))
+    print(all_slides)
     
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
-        if idx < 58:
-            continue
         DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers).run()
         organize_patches(c_slide, out_base, levels)
         shutil.rmtree('WSI_temp_files')

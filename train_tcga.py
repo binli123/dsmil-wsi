@@ -116,12 +116,13 @@ def optimal_thresh(fpr, tpr, thresholds, p=0):
 
 def main():
     parser = argparse.ArgumentParser(description='Train DSMIL on 20x patch features learned by SimCLR')
-    parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes')
-    parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size')
-    parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate')
-    parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs')
-    parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay')
+    parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes [2]')
+    parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size [512]')
+    parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate [0.0002]')
+    parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs [40]')
+    parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
+    parser.add_argument('--split', default='training/validation split', type=float, help='training/validation split [0.2]')
     args = parser.parse_args()
     
     
@@ -139,8 +140,8 @@ def main():
         bags_csv = os.path.join('datasets', args.dataset, args.dataset+'.csv')
         
     bags_path = pd.read_csv(bags_csv)
-    train_path = bags_path.iloc[0:int(len(bags_path)*0.8), :]
-    test_path = bags_path.iloc[int(len(bags_path)*0.8):, :]
+    train_path = bags_path.iloc[0:int(len(bags_path)*(1-args.split)), :]
+    test_path = bags_path.iloc[int(len(bags_path)*(1-args.split)):, :]
     best_score = 0
     save_path = os.path.join('weights', datetime.date.today().strftime("%m%d%Y"))
     os.makedirs(save_path, exist_ok=True)
