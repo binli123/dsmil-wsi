@@ -215,10 +215,10 @@ def main():
     os.makedirs(feats_path, exist_ok=True)
     bags_list = glob.glob(bags_path)
 
-#     if args.magnification == 'tree':
-#         compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
-#     else:
-#         compute_feats(args, bags_list, i_classifier, feats_path)
+    if args.magnification == 'tree':
+        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
+    else:
+        compute_feats(args, bags_list, i_classifier, feats_path)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
     sorted(n_classes)
     all_df = []
