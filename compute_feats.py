@@ -61,10 +61,10 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-        if  args.magnification == 'high':
-            csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpeg'))
-        if args.magnification == 'low':
-            csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
+#         if args.magnification == 'high':
+#             csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpeg'))
+#         elif args.magnification == 'low':
+        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
@@ -72,10 +72,10 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
                 feats, classes = i_classifier(patches)
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
+                sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, iteration+1, len(dataloader)))
         df = pd.DataFrame(feats_list)
         os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
         df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
-        sys.stdout.write('\r Computed: {}/{}'.format(i+1, num_bags))
         
 def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=None, fusion='fusion'):
     embedder_low.eval()
@@ -83,7 +83,8 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
     num_bags = len(bags_list)
     Tensor = torch.FloatTensor
     with torch.no_grad():
-        for i in range(0, num_bags):
+        for i in range(0, num_bags): 
+            print(bags_list[i])
             low_patches = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
             feats_list = []
             feats_tree_list = []
@@ -107,11 +108,11 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                         if fusion == 'cat':
                             feats = np.concatenate((feats.cpu().numpy(), 0.25*feats_list[idx]), axis=-1)
                         feats_tree_list.extend(feats)
+                sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, idx+1, len(low_patches)))
             df = pd.DataFrame(feats_tree_list)
             os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
             df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
-            sys.stdout.write('\r Computed: {}/{}'.format(i+1, num_bags))        
-        
+            print('\n')            
 
 def main():
     parser = argparse.ArgumentParser(description='Compute TCGA features from SimCLR embedder')
@@ -120,7 +121,7 @@ def main():
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader')
     parser.add_argument('--num_workers', default=0, type=int, help='Number of threads for datalodaer')
     parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone')
-    parser.add_argument('--magnification', default='10x', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
+    parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
     parser.add_argument('--weights_high', default=None, type=str, help='Folder of the pretrained weights of high magnification, FOLDER < `simclr/runs/[FOLDER]`')
     parser.add_argument('--weights_low', default=None, type=str, help='Folder of the pretrained weights of low magnification, FOLDER <`simclr/runs/[FOLDER]`')
@@ -154,10 +155,13 @@ def main():
             state_dict_weights.pop('module.l2.weight')
             state_dict_weights.pop('module.l2.bias')
         except:
-            state_dict_weights.pop('l1.weight')
-            state_dict_weights.pop('l1.bias')
-            state_dict_weights.pop('l2.weight')
-            state_dict_weights.pop('l2.bias')
+            try:
+                state_dict_weights.pop('l1.weight')
+                state_dict_weights.pop('l1.bias')
+                state_dict_weights.pop('l2.weight')
+                state_dict_weights.pop('l2.bias')
+            except:
+                pass
         state_dict_init = i_classifier_h.state_dict()
         new_state_dict = OrderedDict()
         for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
@@ -172,10 +176,13 @@ def main():
             state_dict_weights.pop('module.l2.weight')
             state_dict_weights.pop('module.l2.bias')
         except:
-            state_dict_weights.pop('l1.weight')
-            state_dict_weights.pop('l1.bias')
-            state_dict_weights.pop('l2.weight')
-            state_dict_weights.pop('l2.bias')
+            try:
+                state_dict_weights.pop('l1.weight')
+                state_dict_weights.pop('l1.bias')
+                state_dict_weights.pop('l2.weight')
+                state_dict_weights.pop('l2.bias')
+            except:
+                pass
         state_dict_init = i_classifier_l.state_dict()
         new_state_dict = OrderedDict()
         for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
@@ -195,10 +202,13 @@ def main():
             state_dict_weights.pop('module.l2.weight')
             state_dict_weights.pop('module.l2.bias')
         except:
-            state_dict_weights.pop('l1.weight')
-            state_dict_weights.pop('l1.bias')
-            state_dict_weights.pop('l2.weight')
-            state_dict_weights.pop('l2.bias')
+            try:
+                state_dict_weights.pop('l1.weight')
+                state_dict_weights.pop('l1.bias')
+                state_dict_weights.pop('l2.weight')
+                state_dict_weights.pop('l2.bias')
+            except:
+                pass
         state_dict_init = i_classifier.state_dict()
         new_state_dict = OrderedDict()
         for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
@@ -214,7 +224,7 @@ def main():
         
     os.makedirs(feats_path, exist_ok=True)
     bags_list = glob.glob(bags_path)
-
+    
     if args.magnification == 'tree':
         compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
     else:
