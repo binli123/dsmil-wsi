@@ -84,7 +84,6 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
     Tensor = torch.FloatTensor
     with torch.no_grad():
         for i in range(0, num_bags): 
-            print(bags_list[i])
             low_patches = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
             feats_list = []
             feats_tree_list = []
