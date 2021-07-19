@@ -29,7 +29,11 @@ Precomputed features for [TCGA Lung Cancer dataset](https://portal.gdc.cancer.go
 ```
   $ python download.py --dataset=tcga
 ```
-This dataset requires 20GB of free disk space.
+Precomputed features for [Camelyon16 dataset](https://camelyon16.grand-challenge.org/Data/)
+```
+  $ python download.py --dataset=c16
+```
+This dataset requires 30GB of free disk space.
 
 ## Training on default datasets.
 ### MIL benchmark datasets
@@ -42,28 +46,43 @@ This dataset requires 20GB of free disk space.
  [--datasets]      # musk1, musk2, elephant, fox, tiger
  ```
 >Other options are available for learning rate (--lr=0.0002), cross validation fold (--cv_fold=10), weight-decay (--weight_decay=5e-3), and number of epochs (--num_epoch=40).  
-### TCGA lung datasets
+### WSI datasets 
 >Train DSMIL on TCGA Lung Cancer dataset (precomputed features):
  ```
   $ python train_tcga.py --dataset=TCGA-lung-default
 ```
-## Testing on TCGA lung dataset
+### TCGA lung datasets
+>Train DSMIL on Camelyon16 dataset (precomputed features):
+ ```
+  $ python train_tcga.py --dataset=Camelyon16
+```
+
+## Testing and generating detection maps from WSI
+### TCGA dataset
 >We provided a testing pipeline for several sample slides. The slides can be downloaded via:  
 ```
   $ python download.py --dataset=tcga-test
-```   
+```
+>You might need to unzip the file manually
 >To crop the WSIs into patches, run:  
 ```
-  $ python TCGA_test_10x.py
+  $ python test_crop_single.py --dataset=tcga
 ```  
 >A folder containing all patches for each WSI will be created at `./test/patches`.  
 >After the WSIs are cropped, run the testing script:
 ```
-  $ python testing.py
+  $ python testing_tcga.py
 ```   
 >The thumbnails of the WSIs will be saved in `./test/thumbnails`.  
 >The detection color maps will be saved in `./test/output`.  
->The testing pipeline will process every WSI placed inside the `./test/input` folder. The slide will be detected as a LUAD, LUSC, or benign sample.   
+>The testing pipeline will process every WSI placed inside the `./test/input` folder. The slide will be detected as a LUAD, LUSC, or benign sample.
+### Camelyon16 dataset
+> Generating detection maps for Camelyon16 is similar.
+```
+  $ python download.py --dataset=c16-test
+  $ python test_crop_single.py --dataset=c16
+  $ python testing_c16.py
+```
 
 ## Processing raw WSI data
 If you are processing WSI from raw images, you will need to download the WSIs first.

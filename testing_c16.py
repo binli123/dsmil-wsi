@@ -53,10 +53,11 @@ def bag_dataset(args, csv_file_path):
                                     transform=Compose([
                                         ToTensor()
                                     ]))
-    dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, drop_last=False)
+    dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, drop_last=False)
     return dataloader, len(transformed_dataset)
 
 def test(args, bags_list, milnet):
+    milnet.eval()
     num_bags = len(bags_list)
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
@@ -83,18 +84,13 @@ def test(args, bags_list, milnet):
             bag_prediction, A, _ = milnet.b_classifier(bag_feats, ins_classes)
             bag_prediction = bag_prediction.squeeze().cpu().numpy()
             color = [0, 0, 0]
-            if bag_prediction[0] >= args.thres_luad and bag_prediction[1] < args.thres_lusc:
-                print(bags_list[i] + ' is detected as: LUAD')
-                color = [0, 1, 0]
-                attentions = A[:, 0]
-            elif bag_prediction[1] >= args.thres_lusc and bag_prediction[0] < args.thres_luad:
-                print(bags_list[i] + ' is detected as: LUSC')
-                color = [0, 0, 1]
-                attentions = A[:, 1]
-            elif bag_prediction[0] < args.thres_luad and bag_prediction[1] < args.thres_lusc:
-                print(bags_list[i] + ' is detected as: benign')
+            if bag_prediction >= args.thres_tumor:
+                print(bags_list[i] + ' is detected as malignant')
+                color = [1, 0, 0]
+                attentions = A
             else:
-                print(bags_list[i] + ' is detected as: both LUAD and LUSC')
+                attentions = A
+                print(bags_list[i] + ' is detected as benign')
             color_map = np.zeros((np.amax(pos_arr, 0)[0]+1, np.amax(pos_arr, 0)[1]+1, 3))
             attentions = attentions.cpu().numpy()
             attentions = exposure.rescale_intensity(attentions, out_range=(0, 1))
@@ -103,17 +99,16 @@ def test(args, bags_list, milnet):
                 color_map[pos[0], pos[1]] = tile_color
             slide_name = bags_list[i].split(os.sep)[-1]
             color_map = transform.resize(color_map, (color_map.shape[0]*32, color_map.shape[1]*32), order=0)
-            io.imsave(os.path.join('test', 'output', slide_name+'.png'), img_as_ubyte(color_map))        
+            io.imsave(os.path.join('test-c16', 'output', slide_name+'.png'), img_as_ubyte(color_map))        
             
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
     parser = argparse.ArgumentParser(description='Testing workflow includes attention computing and color map production')
-    parser.add_argument('--num_classes', type=int, default=2, help='Number of output classes')
+    parser.add_argument('--num_classes', type=int, default=1, help='Number of output classes')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size of feeding patches')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--feats_size', type=int, default=512)
-    parser.add_argument('--thres_luad', type=float, default=0.7371)
-    parser.add_argument('--thres_lusc', type=float, default=0.2752)
+    parser.add_argument('--thres_tumor', type=float, default=0.1964)
     args = parser.parse_args()
     
     resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
@@ -123,16 +118,18 @@ if __name__ == '__main__':
     i_classifier = mil.IClassifier(resnet, args.feats_size, output_class=args.num_classes).cuda()
     b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
-    
-    state_dict_weights = torch.load(os.path.join('test', 'weights', 'embedder.pth'))
+    state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'embedder.pth'))
     new_state_dict = OrderedDict()
     state_dict_init = i_classifier.state_dict()
     for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
         name = k_0
         new_state_dict[name] = v
     i_classifier.load_state_dict(new_state_dict, strict=False)
-    milnet.load_state_dict(torch.load(os.path.join('test', 'weights', 'aggregator.pth')), strict=False)
+    state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'aggregator.pth'))
+    state_dict_weights["i_classifier.fc.weight"] = state_dict_weights["i_classifier.fc.0.weight"]
+    state_dict_weights["i_classifier.fc.bias"] = state_dict_weights["i_classifier.fc.0.bias"]
+    milnet.load_state_dict(state_dict_weights, strict=False)
     
-    bags_list = glob.glob(os.path.join('test', 'patches', '*'))
-    os.makedirs(os.path.join('test', 'output'), exist_ok=True)
+    bags_list = glob.glob(os.path.join('test-c16', 'patches', '*'))
+    os.makedirs(os.path.join('test-c16', 'output'), exist_ok=True)
     test(args, bags_list, milnet)

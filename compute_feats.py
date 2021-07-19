@@ -214,6 +214,8 @@ def main():
             name = k_0
             new_state_dict[name] = v
         i_classifier.load_state_dict(new_state_dict, strict=False)
+    os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+    torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
     
     if args.magnification == 'tree':
         bags_path = os.path.join('WSI', args.dataset, 'pyramid', '*', '*')
