@@ -51,7 +51,6 @@ This dataset requires 30GB of free disk space.
  ```
   $ python train_tcga.py --dataset=TCGA-lung-default
 ```
-### TCGA lung datasets
 >Train DSMIL on Camelyon16 dataset (precomputed features):
  ```
   $ python train_tcga.py --dataset=Camelyon16
