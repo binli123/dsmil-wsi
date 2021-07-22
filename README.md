@@ -53,7 +53,7 @@ This dataset requires 30GB of free disk space.
 ```
 >Train DSMIL on Camelyon16 dataset (precomputed features):
  ```
-  $ python train_tcga.py --dataset=Camelyon16
+  $ python train_tcga.py --dataset=Camelyon16 --num_classes=1
 ```
 
 ## Testing and generating detection maps from WSI
