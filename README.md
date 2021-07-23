@@ -124,6 +124,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
   $ python run.py --multiscale=1 --level=low
   $ python run.py --multiscale=1 --level=high
 ```
+> Otherwise, you could use the trained embedder for [Camelyon16](https://uwmadison.box.com/shared/static/qs717clgaux5hx2mf5qnwmlsoz2elci2.zip) and [TCGA](https://uwmadison.box.com/shared/static/grxja488s4i07h9wo3tm4sj6t4nqtz0b.zip)  
 
 **Compute the features.**  
 >Compute the features for single magnification:  
