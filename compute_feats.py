@@ -231,7 +231,7 @@ def main():
     else:
         compute_feats(args, bags_list, i_classifier, feats_path)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
-    sorted(n_classes)
+    n_classes = sorted(n_classes)
     all_df = []
     for i, item in enumerate(n_classes):
         bag_csvs = glob.glob(os.path.join(item, '*.csv'))
