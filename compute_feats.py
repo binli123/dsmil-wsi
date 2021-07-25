@@ -61,10 +61,7 @@ def compute_feats(args, bags_list, i_classifier, save_path=None):
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-#         if args.magnification == 'high':
-#             csv_file_path = glob.glob(os.path.join(bags_list[i], '*/*.jpeg'))
-#         elif args.magnification == 'low':
-        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
+        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg')) + glob.glob(os.path.join(bags_list[i], '*.jpeg'))
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
@@ -84,7 +81,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
     Tensor = torch.FloatTensor
     with torch.no_grad():
         for i in range(0, num_bags): 
-            low_patches = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
+            low_patches = glob.glob(os.path.join(bags_list[i], '*.jpg')) + glob.glob(os.path.join(bags_list[i], '*.jpeg'))
             feats_list = []
             feats_tree_list = []
             dataloader, bag_size = bag_dataset(args, low_patches)
@@ -94,7 +91,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
             for idx, low_patch in enumerate(low_patches):
-                high_patches = glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpeg'))
+                high_patches = glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpg')) + glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpeg'))
                 if len(high_patches) == 0:
                     pass
                 else:
@@ -118,7 +115,7 @@ def main():
     parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes')
     parser.add_argument('--num_feats', default=512, type=int, help='Feature size')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader')
-    parser.add_argument('--num_workers', default=0, type=int, help='Number of threads for datalodaer')
+    parser.add_argument('--num_workers', default=4, type=int, help='Number of threads for datalodaer')
     parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone')
     parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
