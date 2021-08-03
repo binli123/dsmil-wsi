@@ -125,7 +125,7 @@ def main():
     parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size [512]')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate [0.0002]')
     parser.add_argument('--num_epochs', default=200, type=int, help='Number of total training epochs [40|200]')
-    parser.add_argument('--gpu_index', type=int, nargs='+', default=0, help='GPU ID(s) [0]')
+    parser.add_argument('--gpu_index', type=int, nargs='+', default=(0,), help='GPU ID(s) [0]')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
     parser.add_argument('--split', default=0.2, type=float, help='Training/Validation split [0.2]')

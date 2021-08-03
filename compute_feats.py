@@ -115,7 +115,7 @@ def main():
     parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes [2]')
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader [128]')
     parser.add_argument('--num_workers', default=4, type=int, help='Number of threads for datalodaer')
-    parser.add_argument('--gpu_index', type=int, nargs='+', default=0, help='GPU ID(s) [0]')
+    parser.add_argument('--gpu_index', type=int, nargs='+', default=(0,), help='GPU ID(s) [0]')
     parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone [resnet18]')
     parser.add_argument('--norm_layer', default='instance', type=str, help='Normalization layer [instance]')
     parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
