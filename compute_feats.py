@@ -153,12 +153,15 @@ def main():
         param.requires_grad = False
     resnet.fc = nn.Identity()
     
-    if args.magnification == 'tree' and args.weights_high != None and agrs.weights_low != None:
+    if args.magnification == 'tree' and args.weights_high != None and args.weights_low != None:
         i_classifier_h = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
         i_classifier_l = mil.IClassifier(copy.deepcopy(resnet), num_feats, output_class=args.num_classes).cuda()
         
         if args.weights_high == 'ImageNet' or args.weights_low == 'ImageNet':
-            print('Use ImageNet features.')
+            if args.norm_layer == 'Batch':
+                print('Use ImageNet features.')
+            else:
+                print('Please use batch normalization for ImageNet feature')
         else:
             weight_path = os.path.join('simclr', 'runs', args.weights_high, 'checkpoints', 'model.pth')
             state_dict_weights = torch.load(weight_path)
@@ -191,7 +194,10 @@ def main():
         i_classifier = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
 
         if args.weights == 'ImageNet':
-            print('Use ImageNet features.')
+            if args.norm_layer == 'Batch':
+                print('Use ImageNet features.')
+            else:
+                print('Please use batch normalization for ImageNet feature')
         else:
             if args.weights is not None:
                 weight_path = os.path.join('simclr', 'runs', args.weights, 'checkpoints', 'model.pth')
