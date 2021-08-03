@@ -126,11 +126,13 @@ if __name__ == '__main__':
     
     state_dict_weights = torch.load(os.path.join('test', 'weights', 'embedder.pth'))
     new_state_dict = OrderedDict()
+    for i in range(4):
+       state_dict_weights.popitem()
     state_dict_init = i_classifier.state_dict()
     for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
         name = k_0
         new_state_dict[name] = v
-    i_classifier.load_state_dict(new_state_dict, strict=True)
+    i_classifier.load_state_dict(new_state_dict, strict=False)
     state_dict_weights = torch.load(os.path.join('test', 'weights', 'aggregator.pth'))
     state_dict_weights["i_classifier.fc.weight"] = state_dict_weights["i_classifier.fc.0.weight"]
     state_dict_weights["i_classifier.fc.bias"] = state_dict_weights["i_classifier.fc.0.bias"]

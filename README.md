@@ -62,7 +62,7 @@ This dataset requires 30GB of free disk space.
 ```
   $ python download.py --dataset=tcga-test
 ```
->You might need to unzip the file manually
+>You might need to unzip the [file](https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip) manually
 >To crop the WSIs into patches, run:  
 ```
   $ python test_crop_single.py --dataset=tcga
@@ -76,7 +76,7 @@ This dataset requires 30GB of free disk space.
 >The detection color maps will be saved in `./test/output`.  
 >The testing pipeline will process every WSI placed inside the `./test/input` folder. The slide will be detected as a LUAD, LUSC, or benign sample.
 ### Camelyon16 dataset
-> Generating detection maps for Camelyon16 is similar.
+> Generating detection maps for Camelyon16 is similar. Direct download [link](https://uwmadison.box.com/shared/static/qs717clgaux5hx2mf5qnwmlsoz2elci2.zip) for the sample slides.
 ```
   $ python download.py --dataset=c16-test
   $ python test_crop_single.py --dataset=c16

@@ -124,12 +124,15 @@ def main():
     parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes [2]')
     parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size [512]')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate [0.0002]')
-    parser.add_argument('--num_epochs', default=40, type=int, help='Number of total training epochs [40]')
+    parser.add_argument('--num_epochs', default=200, type=int, help='Number of total training epochs [40|200]')
+    parser.add_argument('--gpu_index', type=int, nargs='+', default=0, help='GPU ID(s) [0]')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
     parser.add_argument('--split', default=0.2, type=float, help='Training/Validation split [0.2]')
     parser.add_argument('--model', default='dsmil', type=str, help='MIL model [dsmil]')
     args = parser.parse_args()
+    gpu_ids = tuple(args.gpu_index)
+    os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)
     
     if args.model == 'dsmil':
         import dsmil as mil
@@ -139,6 +142,9 @@ def main():
     i_classifier = mil.FCLayer(in_size=args.feats_size, out_size=args.num_classes).cuda()
     b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
+    if args.model == 'dsmil':
+        state_dict_weights = torch.load('init.pth')
+        milnet.load_state_dict(state_dict_weights, strict=False)
     criterion = nn.BCEWithLogitsLoss()
     
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)

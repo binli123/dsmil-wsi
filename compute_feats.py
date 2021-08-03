@@ -112,107 +112,103 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
 
 def main():
     parser = argparse.ArgumentParser(description='Compute TCGA features from SimCLR embedder')
-    parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes')
-    parser.add_argument('--num_feats', default=512, type=int, help='Feature size')
-    parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader')
+    parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes [2]')
+    parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader [128]')
     parser.add_argument('--num_workers', default=4, type=int, help='Number of threads for datalodaer')
-    parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone')
+    parser.add_argument('--gpu_index', type=int, nargs='+', default=0, help='GPU ID(s) [0]')
+    parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone [resnet18]')
+    parser.add_argument('--norm_layer', default='instance', type=str, help='Normalization layer [instance]')
     parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
     parser.add_argument('--weights_high', default=None, type=str, help='Folder of the pretrained weights of high magnification, FOLDER < `simclr/runs/[FOLDER]`')
     parser.add_argument('--weights_low', default=None, type=str, help='Folder of the pretrained weights of low magnification, FOLDER <`simclr/runs/[FOLDER]`')
-    parser.add_argument('--dataset', default='TCGA-lung-single', type=str, help='Dataset folder name')
+    parser.add_argument('--dataset', default='TCGA-lung-single', type=str, help='Dataset folder name [TCGA-lung-single]')
     args = parser.parse_args()
-    
+    gpu_ids = tuple(args.gpu_index)
+    os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)
+
+    if args.norm_layer == 'instance':
+        norm=nn.InstanceNorm2d
+        pretrain = False
+    elif args.norm_layer == 'batch':  
+        norm=nn.BatchNorm2d
+        if args.weights == 'ImageNet':
+            pretrain = True
+        else:
+            pretrain = False
+
     if args.backbone == 'resnet18':
-        resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
+        resnet = models.resnet18(pretrained=pretrain, norm_layer=norm)
         num_feats = 512
     if args.backbone == 'resnet34':
-        resnet = models.resnet34(pretrained=False, norm_layer=nn.InstanceNorm2d)
+        resnet = models.resnet34(pretrained=pretrain, norm_layer=norm)
         num_feats = 512
     if args.backbone == 'resnet50':
-        resnet = models.resnet50(pretrained=False, norm_layer=nn.InstanceNorm2d)
+        resnet = models.resnet50(pretrained=pretrain, norm_layer=norm)
         num_feats = 2048
     if args.backbone == 'resnet101':
-        resnet = models.resnet101(pretrained=False, norm_layer=nn.InstanceNorm2d)
+        resnet = models.resnet101(pretrained=pretrain, norm_layer=norm)
         num_feats = 2048
     for param in resnet.parameters():
         param.requires_grad = False
     resnet.fc = nn.Identity()
     
-    if args.magnification == 'tree':
+    if args.magnification == 'tree' and args.weights_high != None and agrs.weights_low != None:
         i_classifier_h = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
         i_classifier_l = mil.IClassifier(copy.deepcopy(resnet), num_feats, output_class=args.num_classes).cuda()
-        weight_path = os.path.join('simclr', 'runs', args.weights_high, 'checkpoints', 'model.pth')
-        state_dict_weights = torch.load(weight_path)
-        try:
-            state_dict_weights.pop('module.l1.weight')
-            state_dict_weights.pop('module.l1.bias')
-            state_dict_weights.pop('module.l2.weight')
-            state_dict_weights.pop('module.l2.bias')
-        except:
-            try:
-                state_dict_weights.pop('l1.weight')
-                state_dict_weights.pop('l1.bias')
-                state_dict_weights.pop('l2.weight')
-                state_dict_weights.pop('l2.bias')
-            except:
-                pass
-        state_dict_init = i_classifier_h.state_dict()
-        new_state_dict = OrderedDict()
-        for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
-            name = k_0
-            new_state_dict[name] = v
-        i_classifier_h.load_state_dict(new_state_dict, strict=False)
-        weight_path = os.path.join('simclr', 'runs', args.weights_low, 'checkpoints', 'model.pth')
-        state_dict_weights = torch.load(weight_path)
-        try:
-            state_dict_weights.pop('module.l1.weight')
-            state_dict_weights.pop('module.l1.bias')
-            state_dict_weights.pop('module.l2.weight')
-            state_dict_weights.pop('module.l2.bias')
-        except:
-            try:
-                state_dict_weights.pop('l1.weight')
-                state_dict_weights.pop('l1.bias')
-                state_dict_weights.pop('l2.weight')
-                state_dict_weights.pop('l2.bias')
-            except:
-                pass
-        state_dict_init = i_classifier_l.state_dict()
-        new_state_dict = OrderedDict()
-        for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
-            name = k_0
-            new_state_dict[name] = v
-        i_classifier_l.load_state_dict(new_state_dict, strict=False)
-    else:  
-        i_classifier = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
-        if args.weights is not None:
-            weight_path = os.path.join('simclr', 'runs', args.weights, 'checkpoints', 'model.pth')
+        
+        if args.weights_high == 'ImageNet' or args.weights_low == 'ImageNet':
+            print('Use ImageNet features.')
         else:
-            weight_path = glob.glob('simclr/runs/*/checkpoints/*.pth')[-1]
-        state_dict_weights = torch.load(weight_path)
-        try:
-            state_dict_weights.pop('module.l1.weight')
-            state_dict_weights.pop('module.l1.bias')
-            state_dict_weights.pop('module.l2.weight')
-            state_dict_weights.pop('module.l2.bias')
-        except:
-            try:
-                state_dict_weights.pop('l1.weight')
-                state_dict_weights.pop('l1.bias')
-                state_dict_weights.pop('l2.weight')
-                state_dict_weights.pop('l2.bias')
-            except:
-                pass
-        state_dict_init = i_classifier.state_dict()
-        new_state_dict = OrderedDict()
-        for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
-            name = k_0
-            new_state_dict[name] = v
-        i_classifier.load_state_dict(new_state_dict, strict=False)
-    os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
-    torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
+            weight_path = os.path.join('simclr', 'runs', args.weights_high, 'checkpoints', 'model.pth')
+            state_dict_weights = torch.load(weight_path)
+            for i in range(4):
+                state_dict_weights.popitem()
+            state_dict_init = i_classifier_h.state_dict()
+            new_state_dict = OrderedDict()
+            for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
+                name = k_0
+                new_state_dict[name] = v
+            i_classifier_h.load_state_dict(new_state_dict, strict=False)
+#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-high.pth'))
+
+            weight_path = os.path.join('simclr', 'runs', args.weights_low, 'checkpoints', 'model.pth')
+            state_dict_weights = torch.load(weight_path)
+            for i in range(4):
+                state_dict_weights.popitem()
+            state_dict_init = i_classifier_l.state_dict()
+            new_state_dict = OrderedDict()
+            for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
+                name = k_0
+                new_state_dict[name] = v
+            i_classifier_l.load_state_dict(new_state_dict, strict=False)
+#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-low.pth'))
+            print('Use pretrained features.')
+
+    elif args.magnification == 'single':  
+        i_classifier = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
+
+        if args.weights == 'ImageNet':
+            print('Use ImageNet features.')
+        else:
+            if args.weights is not None:
+                weight_path = os.path.join('simclr', 'runs', args.weights, 'checkpoints', 'model.pth')
+            else:
+                weight_path = glob.glob('simclr/runs/*/checkpoints/*.pth')[-1]
+            state_dict_weights = torch.load(weight_path)
+            for i in range(4):
+                state_dict_weights.popitem()
+            state_dict_init = i_classifier.state_dict()
+            new_state_dict = OrderedDict()
+            for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
+                name = k_0
+                new_state_dict[name] = v
+            i_classifier.load_state_dict(new_state_dict, strict=False)
+#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
+            print('Use pretrained features.')
     
     if args.magnification == 'tree':
         bags_path = os.path.join('WSI', args.dataset, 'pyramid', '*', '*')
