@@ -62,7 +62,7 @@ This dataset requires 30GB of free disk space.
 ```
   $ python download.py --dataset=tcga-test
 ```
->You might need to unzip the [file](https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip) manually
+>You might need to unzip the [file](https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip) manually. [7-zip](https://www.7-zip.org/) might be required for unzipping in Linux.
 >To crop the WSIs into patches, run:  
 ```
   $ python test_crop_single.py --dataset=tcga
@@ -124,7 +124,7 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
   $ python run.py --multiscale=1 --level=low
   $ python run.py --multiscale=1 --level=high
 ```
-> Otherwise, you could use the trained embedder for [Camelyon16](https://uwmadison.box.com/shared/static/qs717clgaux5hx2mf5qnwmlsoz2elci2.zip) and [TCGA](https://uwmadison.box.com/shared/static/grxja488s4i07h9wo3tm4sj6t4nqtz0b.zip)  
+> Otherwise, you could use the trained embedder for [Camelyon16](https://drive.google.com/drive/folders/14pSKk2rnPJiJsGK2CQJXctP7fhRJZiyn?usp=sharing) and [TCGA](https://drive.google.com/drive/folders/1Rn_VpgM82VEfnjiVjDbObbBFHvs0V1OE?usp=sharing)  
 
 **Compute the features.**  
 >Compute the features for single magnification:  
