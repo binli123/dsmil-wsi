@@ -92,6 +92,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                 feats_list.extend(feats)
             for idx, low_patch in enumerate(low_patches):
                 high_patches = glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpg')) + glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpeg'))
+                high_patches = high_patches + glob.glob(low_patch.replace('.jpg', os.sep+'*.jpg')) + glob.glob(low_patch.replace('.jpg', os.sep+'*.jpeg'))
                 if len(high_patches) == 0:
                     pass
                 else:
