@@ -87,7 +87,7 @@ This dataset requires 30GB of free disk space.
 If you are processing WSI from raw images, you will need to download the WSIs first.
 
 **Download WSIs.**  
->**From GDC data portal.** You can use [GDC data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) with a manifest file and configuration file. Example manifest files and configuration files can be found in tcga-download. 
+* >**From GDC data portal.** You can use [GDC data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) with a manifest file and configuration file. Example manifest files and configuration files can be found in tcga-download. 
 The raw WSIs take about 1TB of disc space and may take several days to download. Open command-line tool (*Command Prompt* for the case of Windows), unzip the data portal client into `./tcga-download`, navigate to `./tcga-download`, and use commands:
 ```
   $ cd tcga-download
@@ -95,7 +95,7 @@ The raw WSIs take about 1TB of disc space and may take several days to download.
   $ gdc-client -m gdc_manifest.2020-09-06-TCGA-LUSC.txt --config config-LUSC.dtt
 ```
 >The data will be saved in `./WSI/TCGA-lung`. Please check [details](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) regarding the use of TCGA data portal. Otherwise, individual WSIs can be download manually in GDC data portal [repository](https://portal.gdc.cancer.gov/repository?filters=%7B%22op%22%3A%22and%22%2C%22content%22%3A%5B%7B%22content%22%3A%7B%22field%22%3A%22files.cases.primary_site%22%2C%22value%22%3A%5B%22bronchus%20and%20lung%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22content%22%3A%7B%22field%22%3A%22files.data_format%22%2C%22value%22%3A%5B%22svs%22%5D%7D%2C%22op%22%3A%22in%22%7D%2C%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22files.experimental_strategy%22%2C%22value%22%3A%5B%22Diagnostic%20Slide%22%5D%7D%7D%5D%7D)  
->**From Google Drive.** The svs files are also [uploaded](https://drive.google.com/drive/folders/1UobMSqJEqINX2izxrwbgprugjlTporSQ?usp=sharing). The dataset contains in total 1053 slides, including 512 LUSC and 541 LUAD. 10 low-quality LUAD slides are discarded. 
+* >**From Google Drive.** The svs files are also [uploaded](https://drive.google.com/drive/folders/1UobMSqJEqINX2izxrwbgprugjlTporSQ?usp=sharing). The dataset contains in total 1053 slides, including 512 LUSC and 541 LUAD. 10 low-quality LUAD slides are discarded. 
 
 **Sort svs files in the folder.**
 Separate LUAD and LUSC slides according to the IDs and place the files into folder `WSI/TCGA-lung/LUAD` or `WSI/TCGA-lung/LUSC`.  
