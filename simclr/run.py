@@ -7,14 +7,14 @@ import argparse
 
 def generate_csv(args):
     if args.level=='high' and args.multiscale==1:
-        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*', '*.jpg')
-        patch_path = glob.glob(path_temp) # /class_name/bag_name/5x_name/*.jpg
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*', '*.jpeg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/5x_name/*.jpeg
     if args.level=='low' and args.multiscale==1:
-        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*.jpg')
-        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'pyramid', '*', '*', '*.jpeg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpeg
     if args.multiscale==0:
-        path_temp = os.path.join('..', 'WSI', args.dataset, 'single', '*', '*', '*.jpg')
-        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpg
+        path_temp = os.path.join('..', 'WSI', args.dataset, 'single', '*', '*', '*.jpeg')
+        patch_path = glob.glob(path_temp) # /class_name/bag_name/*.jpeg
     df = pd.DataFrame(patch_path)
     df.to_csv('all_patches.csv', index=False)
         
