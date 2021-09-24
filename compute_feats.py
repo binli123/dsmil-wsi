@@ -52,7 +52,7 @@ def bag_dataset(args, csv_file_path):
                                     transform=Compose([
                                         ToTensor()
                                     ]))
-    dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, drop_last=False)
+    dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, drop_last=False)
     return dataloader, len(transformed_dataset)
 
 def compute_feats(args, bags_list, i_classifier, save_path=None):
