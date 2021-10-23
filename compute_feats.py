@@ -55,13 +55,17 @@ def bag_dataset(args, csv_file_path):
     dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, drop_last=False)
     return dataloader, len(transformed_dataset)
 
-def compute_feats(args, bags_list, i_classifier, save_path=None):
+def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='single'):
     i_classifier.eval()
     num_bags = len(bags_list)
     Tensor = torch.FloatTensor
     for i in range(0, num_bags):
         feats_list = []
-        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg')) + glob.glob(os.path.join(bags_list[i], '*.jpeg'))
+        if magnification=='single' or magnification=='low':
+            csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg')) + glob.glob(os.path.join(bags_list[i], '*.jpeg'))
+        elif magnification=='high':
+            csv_file_path = glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpg')) + glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpeg'))
+            print()
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
@@ -119,7 +123,7 @@ def main():
     parser.add_argument('--gpu_index', type=int, nargs='+', default=(0,), help='GPU ID(s) [0]')
     parser.add_argument('--backbone', default='resnet18', type=str, help='Embedder backbone [resnet18]')
     parser.add_argument('--norm_layer', default='instance', type=str, help='Normalization layer [instance]')
-    parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications.')
+    parser.add_argument('--magnification', default='single', type=str, help='Magnification to compute features. Use `tree` for multiple magnifications. Use `high` if patches are cropped for multiple resolution and only process higher level, `low` for only processing lower level.')
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
     parser.add_argument('--weights_high', default=None, type=str, help='Folder of the pretrained weights of high magnification, FOLDER < `simclr/runs/[FOLDER]`')
     parser.add_argument('--weights_low', default=None, type=str, help='Folder of the pretrained weights of low magnification, FOLDER <`simclr/runs/[FOLDER]`')
@@ -158,11 +162,11 @@ def main():
         i_classifier_h = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
         i_classifier_l = mil.IClassifier(copy.deepcopy(resnet), num_feats, output_class=args.num_classes).cuda()
         
-        if args.weights_high == 'ImageNet' or args.weights_low == 'ImageNet':
+        if args.weights_high == 'ImageNet' or args.weights_low == 'ImageNet' or args.weights== 'ImageNet':
             if args.norm_layer == 'Batch':
                 print('Use ImageNet features.')
             else:
-                print('Please use batch normalization for ImageNet feature')
+                raise ValueError('Please use batch normalization for ImageNet feature')
         else:
             weight_path = os.path.join('simclr', 'runs', args.weights_high, 'checkpoints', 'model.pth')
             state_dict_weights = torch.load(weight_path)
@@ -191,11 +195,12 @@ def main():
 #             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-low.pth'))
             print('Use pretrained features.')
 
-    elif args.magnification == 'single':  
+
+    elif args.magnification == 'single' or args.magnification == 'high' or args.magnification == 'low':  
         i_classifier = mil.IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
 
         if args.weights == 'ImageNet':
-            if args.norm_layer == 'Batch':
+            if args.norm_layer == 'batch':
                 print('Use ImageNet features.')
             else:
                 print('Please use batch normalization for ImageNet feature')
@@ -217,7 +222,7 @@ def main():
 #             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
             print('Use pretrained features.')
     
-    if args.magnification == 'tree':
+    if args.magnification == 'tree' or args.magnification == 'low' or args.magnification == 'high' :
         bags_path = os.path.join('WSI', args.dataset, 'pyramid', '*', '*')
     else:
         bags_path = os.path.join('WSI', args.dataset, 'single', '*', '*')
@@ -229,7 +234,7 @@ def main():
     if args.magnification == 'tree':
         compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
     else:
-        compute_feats(args, bags_list, i_classifier, feats_path)
+        compute_feats(args, bags_list, i_classifier, feats_path, args.magnification)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
     n_classes = sorted(n_classes)
     all_df = []
