@@ -137,7 +137,12 @@ Navigate to './simclr' and edit the attributes in the configuration file 'config
 ```
   $ python compute_feats.py --dataset=TCGA-lung --magnification=tree
 ```
-To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification).    
+To use a specific embedder for each magnification, set option `--weights_low=[RUN_NAME]` (embedder for low magnification) and `--weights_high=[RUN_NAME]` (embedder for high magnification).  
+>To use ImageNet pretrained CNN for feature computing (batch normalization needed):
+```
+  $ python compute_feats.py --weights=ImageNet --norm_layer=batch
+```
+>Specify the argument `--magnification=high` or `--magnification=low` if the patches are cropped in multi-magnifications but only one magnification is to be processed.
 
 **Start training.**  
 ```
