@@ -127,7 +127,7 @@ if __name__ == '__main__':
     state_dict_weights = torch.load(os.path.join('test', 'weights', 'embedder.pth'))
     new_state_dict = OrderedDict()
     for i in range(4):
-       state_dict_weights.popitem()
+        state_dict_weights.popitem()
     state_dict_init = i_classifier.state_dict()
     for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
         name = k_0

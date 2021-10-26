@@ -57,14 +57,14 @@ def bag_dataset(args, csv_file_path):
     return dataloader, len(transformed_dataset)
 
 def test(args, bags_list, milnet):
-    milnet.eval()
     num_bags = len(bags_list)
     Tensor = torch.FloatTensor
+    colors = [np.random.choice(range(256), size=3) for i in range(args.num_classes)]
     for i in range(0, num_bags):
         feats_list = []
         pos_list = []
         classes_list = []
-        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.jpg'))
+        csv_file_path = glob.glob(os.path.join(bags_list[i], '*.'+args.patch_ext))
         dataloader, bag_size = bag_dataset(args, csv_file_path)
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
@@ -83,32 +83,56 @@ def test(args, bags_list, milnet):
             ins_classes = torch.from_numpy(classes_arr).cuda()
             bag_prediction, A, _ = milnet.b_classifier(bag_feats, ins_classes)
             bag_prediction = bag_prediction.squeeze().cpu().numpy()
-            color = [0, 0, 0]
-            if bag_prediction >= args.thres_tumor:
-                print(bags_list[i] + ' is detected as malignant')
-                color = [1, 0, 0]
-                attentions = A
-            else:
-                attentions = A
-                print(bags_list[i] + ' is detected as benign')
+            if len(bag_prediction.shape)==0 or len(bag_prediction.shape)==1:
+                bag_prediction = np.atleast_1d(bag_prediction)
+            print(args.thres[0])
+            benign = True
+            num_pos_classes = 0
+            for c in range(args.num_classes):          
+                if bag_prediction[c] >= args.thres[c]:
+                    attentions = A[:, c].cpu().numpy()
+                    num_pos_classes += 1
+                    if benign: # first class detected
+                        print(bags_list[i] + ' is detected as: ' + args.class_name[c])
+                        colored_tiles = np.matmul(attentions[:, None], colors[c][None, :])
+                    else:
+                        print('and ' + args.class_name[c])          
+                        colored_tiles = colored_tiles + np.matmul(attentions[:, None], colors[c][None, :])
+                    benign = False # set flag
+            colored_tiles = (colored_tiles / num_pos_classes)
+            colored_tiles = exposure.rescale_intensity(colored_tiles, out_range=(0, 1))
+            if benign:
+                print(bags_list[i] + ' is detected as: benign')
+                colored_tiles = np.matmul(attentions[:, None], colors[0][None, :]) * 0
             color_map = np.zeros((np.amax(pos_arr, 0)[0]+1, np.amax(pos_arr, 0)[1]+1, 3))
-            attentions = attentions.cpu().numpy()
-            attentions = exposure.rescale_intensity(attentions, out_range=(0, 1))
             for k, pos in enumerate(pos_arr):
-                tile_color = np.asarray(color) * attentions[k]
-                color_map[pos[0], pos[1]] = tile_color
+                color_map[pos[0], pos[1]] = colored_tiles[k]
             slide_name = bags_list[i].split(os.sep)[-1]
             color_map = transform.resize(color_map, (color_map.shape[0]*32, color_map.shape[1]*32), order=0)
-            io.imsave(os.path.join('test-c16', 'output', slide_name+'.png'), img_as_ubyte(color_map))        
-            
+            io.imsave(os.path.join(args.map_path, slide_name+'.png'), img_as_ubyte(color_map))
+            if args.export_scores:
+                df_scores = pd.DataFrame(A.cpu().numpy())
+                pos_arr_str = [str(s) for s in pos_arr]
+                df_scores['pos'] = pos_arr_str
+                df_scores.to_csv(os.path.join(args.score_path, slide_name+'.csv'), index=False)
+                
+                
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
     parser = argparse.ArgumentParser(description='Testing workflow includes attention computing and color map production')
-    parser.add_argument('--num_classes', type=int, default=1, help='Number of output classes')
+    parser.add_argument('--num_classes', type=int, default=2, help='Number of output classes')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size of feeding patches')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--feats_size', type=int, default=512)
-    parser.add_argument('--thres_tumor', type=float, default=0.1964)
+    parser.add_argument('--thres', nargs='+', type=float, default=[0.7371, 0.2752])
+    parser.add_argument('--class_name', nargs='+', type=str, default=None)
+    parser.add_argument('--embedder_weights', type=str, default='test/weights/embedder.pth')
+    parser.add_argument('--aggregator_weights', type=str, default='test/weights/aggregator.pth')
+    parser.add_argument('--bag_path', type=str, default='test/patches')
+    parser.add_argument('--patch_ext', type=str, default='jpg')
+    parser.add_argument('--map_path', type=str, default='test/output')
+    parser.add_argument('--export_scores', type=int, default=0)
+    parser.add_argument('--score_path', type=str, default='test/score')
     args = parser.parse_args()
     
     resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
@@ -118,7 +142,8 @@ if __name__ == '__main__':
     i_classifier = mil.IClassifier(resnet, args.feats_size, output_class=args.num_classes).cuda()
     b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
-    state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'embedder.pth'))
+
+    state_dict_weights = torch.load(args.embedder_weights)
     new_state_dict = OrderedDict()
     for i in range(4):
         state_dict_weights.popitem()
@@ -127,11 +152,17 @@ if __name__ == '__main__':
         name = k_0
         new_state_dict[name] = v
     i_classifier.load_state_dict(new_state_dict, strict=False)
-    state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'aggregator.pth'))
+    state_dict_weights = torch.load(args.aggregator_weights)
     state_dict_weights["i_classifier.fc.weight"] = state_dict_weights["i_classifier.fc.0.weight"]
     state_dict_weights["i_classifier.fc.bias"] = state_dict_weights["i_classifier.fc.0.bias"]
     milnet.load_state_dict(state_dict_weights, strict=False)
-    
-    bags_list = glob.glob(os.path.join('test-c16', 'patches', '*'))
-    os.makedirs(os.path.join('test-c16', 'output'), exist_ok=True)
+
+    bags_list = glob.glob(os.path.join(args.bag_path, '*'))
+    os.makedirs(args.map_path, exist_ok=True)
+    if args.export_scores:
+        os.makedirs(args.score_path, exist_ok=True)
+    if args.class_name == None:
+        args.class_name = ['class {}'.format(c) for c in range(args.num_classes)]
+    if len(args.thres) != args.num_classes:
+        raise ValueError('Number of thresholds does not match classes.')
     test(args, bags_list, milnet)
