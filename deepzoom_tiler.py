@@ -254,8 +254,6 @@ if __name__ == '__main__':
     
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
-        if idx<=290:
-            continue
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
         DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
         organize_patches(c_slide, out_base, levels)
