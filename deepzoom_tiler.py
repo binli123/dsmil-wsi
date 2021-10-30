@@ -67,17 +67,18 @@ class TileWorker(Process):
                 last_associated = associated
             try:
                 tile = dz.get_tile(level, address)
+                edge = tile.filter(ImageFilter.FIND_EDGES)
+                edge = ImageStat.Stat(edge).sum
+                edge = np.mean(edge)/(self._tile_size**2)
+                w, h = tile.size
+                if edge > self._threshold:
+                    if not (w==self._tile_size and h==self._tile_size):
+                        tile = tile.resize((self._tile_size, self._tile_size))
+                    tile.save(outfile, quality=self._quality)
             except:
                 pass
-            edge = tile.filter(ImageFilter.FIND_EDGES)
-            edge = ImageStat.Stat(edge).sum
-            edge = np.mean(edge)/(self._tile_size**2)
-            w, h = tile.size
-            if edge > self._threshold:
-                if not (w==self._tile_size and h==self._tile_size):
-                    tile = tile.resize((self._tile_size, self._tile_size))
-                tile.save(outfile, quality=self._quality)
             self._queue.task_done()
+            
 
     def _get_dz(self, associated=None):
         if associated is not None:
@@ -253,6 +254,8 @@ if __name__ == '__main__':
     
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
+        if idx<=290:
+            continue
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
         DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
         organize_patches(c_slide, out_base, levels)
