@@ -67,6 +67,7 @@ def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpg')) + glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpeg'))
             print()
         dataloader, bag_size = bag_dataset(args, csv_file_path)
+        print(i_classifier.state_dict())
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
                 patches = batch['input'].float().cuda() 
@@ -74,9 +75,13 @@ def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
                 sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, iteration+1, len(dataloader)))
-        df = pd.DataFrame(feats_list)
-        os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
-        df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
+        if len(feats_list) == 0:
+            print('No valid patch extracted from: ' + bags_list[i])
+        else:
+            df = pd.DataFrame(feats_list)
+            os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
+            df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
+        print('\n')
         
 def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=None, fusion='fusion'):
     embedder_low.eval()
@@ -110,9 +115,12 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                             feats = np.concatenate((feats.cpu().numpy(), 0.25*feats_list[idx]), axis=-1)
                         feats_tree_list.extend(feats)
                 sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, idx+1, len(low_patches)))
-            df = pd.DataFrame(feats_tree_list)
-            os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
-            df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
+            if len(feats_tree_list) == 0:
+                print('No valid patch extracted from: ' + bags_list[i])
+            else:
+                df = pd.DataFrame(feats_tree_list)
+                os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
+                df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
             print('\n')            
 
 def main():
@@ -163,7 +171,7 @@ def main():
         i_classifier_l = mil.IClassifier(copy.deepcopy(resnet), num_feats, output_class=args.num_classes).cuda()
         
         if args.weights_high == 'ImageNet' or args.weights_low == 'ImageNet' or args.weights== 'ImageNet':
-            if args.norm_layer == 'Batch':
+            if args.norm_layer == 'batch':
                 print('Use ImageNet features.')
             else:
                 raise ValueError('Please use batch normalization for ImageNet feature')
@@ -178,8 +186,8 @@ def main():
                 name = k_0
                 new_state_dict[name] = v
             i_classifier_h.load_state_dict(new_state_dict, strict=False)
-#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
-#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-high.pth'))
+            os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+            torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-high.pth'))
 
             weight_path = os.path.join('simclr', 'runs', args.weights_low, 'checkpoints', 'model.pth')
             state_dict_weights = torch.load(weight_path)
@@ -191,8 +199,8 @@ def main():
                 name = k_0
                 new_state_dict[name] = v
             i_classifier_l.load_state_dict(new_state_dict, strict=False)
-#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
-#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-low.pth'))
+            os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+            torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder-low.pth'))
             print('Use pretrained features.')
 
 
@@ -218,8 +226,8 @@ def main():
                 name = k_0
                 new_state_dict[name] = v
             i_classifier.load_state_dict(new_state_dict, strict=False)
-#             os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
-#             torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
+            os.makedirs(os.path.join('embedder', args.dataset), exist_ok=True)
+            torch.save(new_state_dict, os.path.join('embedder', args.dataset, 'embedder.pth'))
             print('Use pretrained features.')
     
     if args.magnification == 'tree' or args.magnification == 'low' or args.magnification == 'high' :
