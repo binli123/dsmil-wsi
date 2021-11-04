@@ -67,7 +67,6 @@ def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='
             csv_file_path = glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpg')) + glob.glob(os.path.join(bags_list[i], '*'+os.sep+'*.jpeg'))
             print()
         dataloader, bag_size = bag_dataset(args, csv_file_path)
-        print(i_classifier.state_dict())
         with torch.no_grad():
             for iteration, batch in enumerate(dataloader):
                 patches = batch['input'].float().cuda() 
@@ -81,7 +80,6 @@ def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='
             df = pd.DataFrame(feats_list)
             os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
             df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
-        print('\n')
         
 def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=None, fusion='fusion'):
     embedder_low.eval()

@@ -238,10 +238,10 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--format', type=str, default='jpeg', help='image format for tiles [jpeg]')
     parser.add_argument('-v', '--slide_format', type=str, default='svs', help='image format for tiles [svs]')
     parser.add_argument('-j', '--workers', type=int, default=4, help='number of worker processes to start [4]')
-    parser.add_argument('-q', '--quality', type=int, default=90, help='JPEG compression quality [90]')
+    parser.add_argument('-q', '--quality', type=int, default=60, help='JPEG compression quality [60]')
     parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
     parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=(0,), help='Levels for patch extraction [0]')
-    parser.add_argument('-t', '--background_t', type=int, default=20, help='Threshold for filtering background [20]')  
+    parser.add_argument('-t', '--background_t', type=int, default=10, help='Threshold for filtering background [10]')  
     args = parser.parse_args()
     levels = tuple(args.magnifications)
     assert len(levels)<=2, 'Only 1 or 2 magnifications are supported!'

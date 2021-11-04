@@ -135,7 +135,11 @@ if __name__ == '__main__':
     parser.add_argument('--score_path', type=str, default='test/score')
     args = parser.parse_args()
     
-    resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
+    if args.embedder_weights == 'ImageNet':
+        print('Use ImageNet features')
+        resnet = models.resnet18(pretrained=True, norm_layer=nn.BatchNorm2d)
+    else:
+        resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
     for param in resnet.parameters():
         param.requires_grad = False
     resnet.fc = nn.Identity()
@@ -143,16 +147,18 @@ if __name__ == '__main__':
     b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
 
-    state_dict_weights = torch.load(args.embedder_weights)
-    new_state_dict = OrderedDict()
-    for i in range(4):
-        state_dict_weights.popitem()
-    state_dict_init = i_classifier.state_dict()
-    for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
-        name = k_0
-        new_state_dict[name] = v
-    i_classifier.load_state_dict(new_state_dict, strict=False)
-    state_dict_weights = torch.load(args.aggregator_weights)
+    if args.embedder_weights !=  'ImageNet':
+        state_dict_weights = torch.load(args.embedder_weights)
+        new_state_dict = OrderedDict()
+        for i in range(4):
+            state_dict_weights.popitem()
+        state_dict_init = i_classifier.state_dict()
+        for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
+            name = k_0
+            new_state_dict[name] = v
+        i_classifier.load_state_dict(new_state_dict, strict=False)
+
+    state_dict_weights = torch.load(args.aggregator_weights) 
     state_dict_weights["i_classifier.fc.weight"] = state_dict_weights["i_classifier.fc.0.weight"]
     state_dict_weights["i_classifier.fc.bias"] = state_dict_weights["i_classifier.fc.0.bias"]
     milnet.load_state_dict(state_dict_weights, strict=False)
