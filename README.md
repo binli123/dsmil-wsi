@@ -19,7 +19,7 @@ Required packages
 Install [OpenSlide and openslide-python](https://pypi.org/project/openslide-python/).  
 [Tutorial 1](https://openslide.org/) and [Tutorial 2 (Windows)](https://www.youtube.com/watch?v=0i75hfLlPsw).  
 
-## Features preparation
+## Download feature vectors for MIL network
 MIL benchmark datasets can be downloaded via:
 ```
   $ python download.py --dataset=mil
@@ -55,10 +55,22 @@ This dataset requires 30GB of free disk space.
  ```
   $ python train_tcga.py --dataset=Camelyon16 --num_classes=1
 ```
+Useful arguments:
+```
+[--num_classes]       # Number of non-negative classes
+[--feats_size]        # Size of feature vector (depends on the CNN backbone)
+[--lr]                # Initial learning rate [0.0002]
+[--num_epochs]        # Number of training epochs [200]
+[--weight_decay]      # Weight decay [5e-3]
+[--dataset]           # Dataset folder name
+[--split]             # Training/validation split [0.2]
+[--dropout_patch]     # Randomly dropout a portion of patches and replace with duplicates during training [0]
+[--dropout_node]      # Randomly dropout a portion of nodes in the value vector generation network during training [0]
+```
 
 ## Testing and generating detection maps from WSI
 ### TCGA dataset
->We provided a testing pipeline for several sample slides. The slides can be downloaded via:  
+>Download some testing slides:  
 ```
   $ python download.py --dataset=tcga-test
 ```
@@ -135,7 +147,7 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 ```
   $ python compute_feats.py --weights=ImageNet --norm_layer=batch
 ```
->Specify the argument `--magnification=high` or `--magnification=low` if the patches are cropped in multi-magnifications but only one magnification is to be processed.
+>Specify the argument `--magnification=high` or `--magnification=low` if the patches are cropped in multi-magnifications but only one magnification is to be computed.
 
 **Start training.**  
 ```
@@ -169,6 +181,73 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
   $ python train_tcga.py --dataset=[DATASET_NAME]
 ```
 >You will need to adjust `--num_classes` option if the dataset contains more than 2 positive classes or only 1 positive class and 1 negative class (binary classifier). See the next section for details.  
+
+6. Testing.
+```
+  $ python attention_map.py --bag_path test/patches --map_path test/output --thres 0.73 0.28
+```
+Useful arguments:
+```
+[--num_classes]         # Number of non-negative classes.
+[--feats_size]          # Size of feature vector (depends on the CNN backbone).
+[--thres]               # List of thresholds for the classes returned by the training function.
+[--embedder_weights]    # Path to the embedder weights file (saved by SimCLR). Use 'ImageNet' if ImageNet pretrained embedder is used.
+[--aggregator_weights]  # Path to the aggregator weights file.
+[--bag_path]            # Path to a folder containing folders of patches.
+[--path_ext]            # File extensino of patches.
+[--map_path]            # Path of output attention maps.
+```
+
+## Folder structures
+Data is organized in two folders, `WSI` and `datasets`. `WSI` folder contains the images and `datasets` contains the computed features.
+```
+root
+|-- WSI
+|   |-- DATASET_NAME
+|   |   |-- CLASS_1
+|   |   |   |-- SLIDE_1.svs
+|   |   |   |-- ...
+|   |   |-- CLASS_2
+|   |   |   |-- SLIDE_1.svs
+|   |   |   |-- ...
+```
+Once patch extraction is performed, `sinlge` folder or `pyramid` folder will appear.
+```
+root
+|-- WSI
+|   |-- DATASET_NAME
+|   |   |-- single
+|   |   |   |-- CLASS_1
+|   |   |   |   |-- SLIDE_1
+|   |   |   |   |   |-- PATCH_1.jpeg
+|   |   |   |   |   |-- ...
+|   |   |   |   |-- ...
+|   |   |-- pyramid
+|   |   |   |-- CLASS_1
+|   |   |   |   |-- SLIDE_1
+|   |   |   |   |   |-- PATCH_LOW_1
+|   |   |   |   |   |   |-- PATCH_HIGH_1.jpeg
+|   |   |   |   |   |   |-- ...
+|   |   |   |   |   |-- ...
+|   |   |   |   |   |-- PATCH_LOW_1.jpeg
+|   |   |   |   |   |-- ...
+|   |   |   |   |-- ...
+```
+Once feature computing is performed, `DATASET_NAME` folder will appear inside `datasets` folder.
+```
+root
+|-- datasets
+|   |-- DATASET_NAME
+|   |   |-- CLASS_1
+|   |   |   |-- SLIDE_1.csv
+|   |   |   |-- ...
+|   |   |-- CLASS_2
+|   |   |   |-- SLIDE_1.csv
+|   |   |   |-- ...
+|   |   |-- CLASS_1.csv
+|   |   |-- CLASS_2.csv
+|   |   |-- DATASET_NAME.csv
+```
   
 ## Feature vector csv files explanation
 1. For each bag, there is a .csv file where each row contains the feature of an instance. The .csv is named as "_bagID_.csv" and put into a folder named "_dataset-name_/_category_/".  
