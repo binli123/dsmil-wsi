@@ -31,6 +31,7 @@ def get_bag_feats(csv_file_df, args):
     return label, feats
 
 def train(train_df, milnet, criterion, optimizer, args):
+    milnet.train()
     csvs = shuffle(train_df).reset_index(drop=True)
     total_loss = 0
     bc = 0
@@ -38,6 +39,7 @@ def train(train_df, milnet, criterion, optimizer, args):
     for i in range(len(train_df)):
         optimizer.zero_grad()
         label, feats = get_bag_feats(train_df.iloc[i], args)
+        feats = dropout_patches(feats, args.dropout_patch)
         bag_label = Variable(Tensor([label]))
         bag_feats = Variable(Tensor([feats]))
         bag_feats = bag_feats.view(-1, args.feats_size)
@@ -52,7 +54,16 @@ def train(train_df, milnet, criterion, optimizer, args):
         sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(train_df), loss.item()))
     return total_loss / len(train_df)
 
+def dropout_patches(feats, p):
+    idx = np.random.choice(np.arange(feats.shape[0]), int(feats.shape[0]*(1-p)), replace=False)
+    sampled_feats = np.take(feats, idx, axis=0)
+    pad_idx = np.random.choice(np.arange(sampled_feats.shape[0]), int(feats.shape[0]*p), replace=False)
+    pad_feats = np.take(sampled_feats, pad_idx, axis=0)
+    sampled_feats = np.concatenate((sampled_feats, pad_feats), axis=0)
+    return sampled_feats
+
 def test(test_df, milnet, criterion, optimizer, args):
+    milnet.eval()
     csvs = shuffle(test_df).reset_index(drop=True)
     total_loss = 0
     test_labels = []
@@ -130,6 +141,8 @@ def main():
     parser.add_argument('--dataset', default='TCGA-lung-default', type=str, help='Dataset folder name')
     parser.add_argument('--split', default=0.2, type=float, help='Training/Validation split [0.2]')
     parser.add_argument('--model', default='dsmil', type=str, help='MIL model [dsmil]')
+    parser.add_argument('--dropout_patch', default=0, type=float, help='Patch dropout rate [0]')
+    parser.add_argument('--dropout_node', default=0, type=float, help='Bag classifier dropout rate [0]')
     args = parser.parse_args()
     gpu_ids = tuple(args.gpu_index)
     os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)
@@ -140,7 +153,7 @@ def main():
         import abmil as mil
     
     i_classifier = mil.FCLayer(in_size=args.feats_size, out_size=args.num_classes).cuda()
-    b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
+    b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes, dropout_v=args.dropout_node).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
     if args.model == 'dsmil':
         state_dict_weights = torch.load('init.pth')
