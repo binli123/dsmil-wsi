@@ -88,16 +88,16 @@ def test(test_df, milnet, criterion, optimizer, args):
     test_predictions = np.array(test_predictions)
     auc_value, _, thresholds_optimal = multi_label_roc(test_labels, test_predictions, args.num_classes, pos_label=1)
     if args.num_classes==1:
-        class_prediction_bag = test_predictions
-        class_prediction_bag[class_prediction_bag>=thresholds_optimal[0]] = 1
-        class_prediction_bag[class_prediction_bag<thresholds_optimal[0]] = 0
+        class_prediction_bag = copy.deepcopy(test_predictions)
+        class_prediction_bag[test_predictions>=thresholds_optimal[0]] = 1
+        class_prediction_bag[test_predictions<thresholds_optimal[0]] = 0
         test_predictions = class_prediction_bag
         test_labels = np.squeeze(test_labels)
     else:        
         for i in range(args.num_classes):
-            class_prediction_bag = test_predictions[:, i]
-            class_prediction_bag[class_prediction_bag>=thresholds_optimal[i]] = 1
-            class_prediction_bag[class_prediction_bag<thresholds_optimal[i]] = 0
+            class_prediction_bag = copy.deepcopy(test_predictions[:, i])
+            class_prediction_bag[test_predictions[:, i]>=thresholds_optimal[i]] = 1
+            class_prediction_bag[test_predictions[:, i]<thresholds_optimal[i]] = 0
             test_predictions[:, i] = class_prediction_bag
     bag_score = 0
     for i in range(0, len(test_df)):
