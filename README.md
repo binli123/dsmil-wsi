@@ -194,7 +194,7 @@ Useful arguments:
 [--embedder_weights]    # Path to the embedder weights file (saved by SimCLR). Use 'ImageNet' if ImageNet pretrained embedder is used.
 [--aggregator_weights]  # Path to the aggregator weights file.
 [--bag_path]            # Path to a folder containing folders of patches.
-[--path_ext]            # File extensino of patches.
+[--patch_ext]            # File extensino of patches.
 [--map_path]            # Path of output attention maps.
 ```
 
