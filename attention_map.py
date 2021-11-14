@@ -57,6 +57,7 @@ def bag_dataset(args, csv_file_path):
     return dataloader, len(transformed_dataset)
 
 def test(args, bags_list, milnet):
+    milnet.eval()
     num_bags = len(bags_list)
     Tensor = torch.FloatTensor
     colors = [np.random.choice(range(256), size=3) for i in range(args.num_classes)]
