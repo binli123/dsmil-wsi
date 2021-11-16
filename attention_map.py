@@ -86,7 +86,6 @@ def test(args, bags_list, milnet):
             bag_prediction = bag_prediction.squeeze().cpu().numpy()
             if len(bag_prediction.shape)==0 or len(bag_prediction.shape)==1:
                 bag_prediction = np.atleast_1d(bag_prediction)
-            print(args.thres[0])
             benign = True
             num_pos_classes = 0
             for c in range(args.num_classes):          
@@ -104,6 +103,7 @@ def test(args, bags_list, milnet):
             colored_tiles = exposure.rescale_intensity(colored_tiles, out_range=(0, 1))
             if benign:
                 print(bags_list[i] + ' is detected as: benign')
+                attentions = torch.sum(A, 1).cpu().numpy()
                 colored_tiles = np.matmul(attentions[:, None], colors[0][None, :]) * 0
             color_map = np.zeros((np.amax(pos_arr, 0)[0]+1, np.amax(pos_arr, 0)[1]+1, 3))
             for k, pos in enumerate(pos_arr):

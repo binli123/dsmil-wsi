@@ -7,6 +7,7 @@ import shutil
 import sys
 import glob
 import numpy as np
+import time
 from unicodedata import normalize
 from skimage import io
 from skimage.color import rgb2hsv
@@ -92,20 +93,27 @@ class TileWorker(Process):
 class DeepZoomImageTiler(object):
     """Handles generation of tiles and metadata for a single image."""
 
-    def __init__(self, dz, basename, format, associated, queue):
+    def __init__(self, dz, basename, target_levels, mag_base, format, associated, queue):
         self._dz = dz
         self._basename = basename
         self._format = format
         self._associated = associated
         self._queue = queue
         self._processed = 0
+        self._target_levels = target_levels
+        self._mag_base = int(mag_base)
 
     def run(self):
         self._write_tiles()
 
     def _write_tiles(self):
+        target_levels = [self._dz.level_count-i-1 for i in self._target_levels]
+        mag_list = [int(self._mag_base/2**i) for i in self._target_levels]
+        mag_idx = 0
         for level in range(self._dz.level_count):
-            tiledir = os.path.join("%s_files" % self._basename, str(level))
+            if not (level in target_levels):
+                continue
+            tiledir = os.path.join("%s_files" % self._basename, str(mag_list[mag_idx]))
             if not os.path.exists(tiledir):
                 os.makedirs(tiledir)
             cols, rows = self._dz.level_tiles[level]
@@ -117,6 +125,7 @@ class DeepZoomImageTiler(object):
                         self._queue.put((self._associated, level, (col, row),
                                     tilename))
                     self._tile_done()
+            mag_idx += 1
 
     def _tile_done(self):
         self._processed += 1
@@ -132,13 +141,15 @@ class DeepZoomImageTiler(object):
 class DeepZoomStaticTiler(object):
     """Handles generation of tiles and metadata for all images in a slide."""
 
-    def __init__(self, slidepath, basename, format, tile_size, overlap,
+    def __init__(self, slidepath, basename, mag_levels, base_mag, format, tile_size, overlap,
                 limit_bounds, quality, workers, threshold):
         self._slide = open_slide(slidepath)
         self._basename = basename
         self._format = format
         self._tile_size = tile_size
         self._overlap = overlap
+        self._mag_levels = mag_levels
+        self._base_mag = base_mag
         self._limit_bounds = limit_bounds
         self._queue = JoinableQueue(2 * workers)
         self._workers = workers
@@ -161,7 +172,13 @@ class DeepZoomStaticTiler(object):
             basename = os.path.join(self._basename, self._slugify(associated))
         dz = DeepZoomGenerator(image, self._tile_size, self._overlap,
                     limit_bounds=self._limit_bounds)
-        tiler = DeepZoomImageTiler(dz, basename, self._format, associated,
+        
+        MAG_BASE = self._slide.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER)
+        first_level = int(int(MAG_BASE) / self._base_mag - 1) # raw / input, 40/20=2, 40/40=0
+        target_levels = [i+first_level for i in self._mag_levels] # levels start from 0
+        target_levels.reverse()
+        
+        tiler = DeepZoomImageTiler(dz, basename, target_levels, MAG_BASE, self._format, associated,
                     self._queue)
         tiler.run()
 
@@ -190,22 +207,25 @@ class DeepZoomStaticTiler(object):
             self._queue.put(None)
         self._queue.join()
 
-def organize_patches(img_slide, out_base, level=(0,)):
+def nested_patches(img_slide, out_base, level=(0,), ext='jpeg'):
+    print('\n Organizing patches')
     img_name = img_slide.split(os.sep)[-1].split('.')[0]
     img_class = img_slide.split(os.sep)[2]
     n_levels = len(glob.glob('WSI_temp_files/*'))
     bag_path = os.path.join(out_base, img_class, img_name)
     os.makedirs(bag_path, exist_ok=True)
     if len(level)==1:
-        patches = glob.glob(os.path.join('WSI_temp_files', str(n_levels-level[-1]-1), '*.jpeg'))
+        patches = glob.glob(os.path.join('WSI_temp_files', '*', '*.'+ext))
         for i, patch in enumerate(patches):
             patch_name = patch.split(os.sep)[-1]
             shutil.move(patch, os.path.join(bag_path, patch_name))
-            sys.stdout.write('\r Organizing patches [%d/%d]' % (i+1, len(patches)))
+            sys.stdout.write('\r Patch [%d/%d]' % (i+1, len(patches)))
         print('Done.')
     else:
         level_factor = 2**int(level[1]-level[0])
-        low_patches = glob.glob(os.path.join('WSI_temp_files', str(n_levels-level[-1]-1), '*.jpeg'))
+        levels = [int(os.path.basename(i)) for i in glob.glob(os.path.join('WSI_temp_files', '*'))]
+        levels.sort()
+        low_patches = glob.glob(os.path.join('WSI_temp_files', str(levels[0]), '*.'+ext))
         for i, low_patch in enumerate(low_patches):
             low_patch_name = low_patch.split(os.sep)[-1]
             shutil.move(low_patch, os.path.join(bag_path, low_patch_name))
@@ -218,7 +238,7 @@ def organize_patches(img_slide, out_base, level=(0,)):
             high_y_list = list( range(low_y*level_factor, (low_y+1)*level_factor) )
             for x_pos in high_x_list:
                 for y_pos in high_y_list:
-                    high_patch = glob.glob(os.path.join('WSI_temp_files', str(n_levels-level[0]-1), '{}_{}.jpeg'.format(x_pos, y_pos)))
+                    high_patch = glob.glob(os.path.join('WSI_temp_files', str(levels[1]), '{}_{}.'.format(x_pos, y_pos)+ext))
                     if len(high_patch)!=0:
                         high_patch = high_patch[0]
                         shutil.move(high_patch, os.path.join(bag_path, low_patch_folder, high_patch.split(os.sep)[-1]))
@@ -227,7 +247,7 @@ def organize_patches(img_slide, out_base, level=(0,)):
                 os.remove(low_patch)
             except:
                 pass
-            sys.stdout.write('\r Organizing patches [%d/%d]' % (i+1, len(low_patches)))
+            sys.stdout.write('\r Patch [%d/%d]' % (i+1, len(low_patches)))
         print('Done.')
 
 if __name__ == '__main__':
@@ -238,10 +258,11 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--format', type=str, default='jpeg', help='image format for tiles [jpeg]')
     parser.add_argument('-v', '--slide_format', type=str, default='svs', help='image format for tiles [svs]')
     parser.add_argument('-j', '--workers', type=int, default=4, help='number of worker processes to start [4]')
-    parser.add_argument('-q', '--quality', type=int, default=60, help='JPEG compression quality [60]')
+    parser.add_argument('-q', '--quality', type=int, default=70, help='JPEG compression quality [70]')
     parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
+    parser.add_argument('-b', '--base_mag', type=int, default=20, help='maximum magnification for patch extraction [20]')
     parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=(0,), help='Levels for patch extraction [0]')
-    parser.add_argument('-t', '--background_t', type=int, default=10, help='Threshold for filtering background [10]')  
+    parser.add_argument('-t', '--background_t', type=int, default=15, help='Threshold for filtering background [15]')  
     args = parser.parse_args()
     levels = tuple(args.magnifications)
     assert len(levels)<=2, 'Only 1 or 2 magnifications are supported!'
@@ -255,7 +276,7 @@ if __name__ == '__main__':
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
-        DeepZoomStaticTiler(c_slide, 'WSI_temp', args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
-        organize_patches(c_slide, out_base, levels)
-        shutil.rmtree('WSI_temp_files')
+        DeepZoomStaticTiler(c_slide, 'WSI_temp', levels, args.base_mag, args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
+        nested_patches(c_slide, out_base, levels)
+        shutil.rmtree('WSI_temp_files') 
     print('Patch extraction done for {} slides.'.format(len(all_slides)))
