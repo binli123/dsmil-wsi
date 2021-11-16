@@ -7,7 +7,7 @@ import shutil
 import sys
 import glob
 import numpy as np
-import time
+import math
 from unicodedata import normalize
 from skimage import io
 from skimage.color import rgb2hsv
@@ -174,7 +174,7 @@ class DeepZoomStaticTiler(object):
                     limit_bounds=self._limit_bounds)
         
         MAG_BASE = self._slide.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER)
-        first_level = int(int(MAG_BASE) / self._base_mag - 1) # raw / input, 40/20=2, 40/40=0
+        first_level = int(math.log2(float(MAG_BASE)/self._base_mag)) # raw / input, 40/20=2, 40/40=0
         target_levels = [i+first_level for i in self._mag_levels] # levels start from 0
         target_levels.reverse()
         
@@ -260,7 +260,7 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--workers', type=int, default=4, help='number of worker processes to start [4]')
     parser.add_argument('-q', '--quality', type=int, default=70, help='JPEG compression quality [70]')
     parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
-    parser.add_argument('-b', '--base_mag', type=int, default=20, help='maximum magnification for patch extraction [20]')
+    parser.add_argument('-b', '--base_mag', type=float, default=20, help='maximum magnification for patch extraction [20]')
     parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=(0,), help='Levels for patch extraction [0]')
     parser.add_argument('-t', '--background_t', type=int, default=15, help='Threshold for filtering background [15]')  
     args = parser.parse_args()
