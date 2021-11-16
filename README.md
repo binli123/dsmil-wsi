@@ -107,13 +107,13 @@ Separate LUAD and LUSC slides according to the IDs and place the files into fold
 
 **Prepare the patches.**  
 >We will be using [OpenSlide](https://openslide.org/), a C library with a [Python API](https://pypi.org/project/openslide-python/) that provides a simple interface to read WSI data. We refer the users to [OpenSlide Python API document](https://openslide.org/api/python/) for the details of using this tool.  
->The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for two magnification levels. The first magnification level is level 0, which corresponds to 40x. For example, to extract patches at 20x (level 1) and 5x (level 3) magnifications, run:  
+>The patches could be saved in './WSI/TCGA-lung/pyramid' in a pyramidal structure for two magnification levels. The first magnification level is level 0, which corresponds to a base magnification specified by `-b`. For example, to extract patches at 20x and 5x magnifications, run:  
 ```
-  $ python deepzoom_tiler.py -m 1 3
+  $ python deepzoom_tiler.py -m 0 2 -b 20
 ```
 >Or, the patches could be cropped at a single level magnification and saved in './WSI/TCGA-lung/single'. For example, extract patches at 10x magnification:  
 ```
-  $ python deepzoom_tiler.py -m 2
+  $ python deepzoom_tiler.py -m 0 -b 10
 ```
 
 **Train the embedder.**  
@@ -159,7 +159,7 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 > For binary classifier, the negative class should have `[CATEGORY_NAME]` at index `0` when sorted alphabetically. For multi-class classifier, if you have a negative class (not belonging to any of the positive classes), the folder should have `[CATEGORY_NAME]` at **the last index** when sorted alphabetically. The naming of the class folders does not matter if you do not have a negative class.
 2. Crop patches.  
 ```
-  $ python deepzoom_tiler.py -m 2 -d [DATASET_NAME]
+  $ python deepzoom_tiler.py -m 0 -b 20 -d [DATASET_NAME]
 ```
 >Set flag `-m [LEVEL 1] [LEVEL 2]` to crop patches from multiple magnifications. 
 3. Train an embedder.  
