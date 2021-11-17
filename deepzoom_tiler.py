@@ -17,21 +17,7 @@ from PIL import Image, ImageFilter, ImageStat
 
 Image.MAX_IMAGE_PIXELS = None
 
-if os.name == 'nt':
-    _dll_path = os.getenv('OPENSLIDE_PATH')
-    if _dll_path is not None:
-        if hasattr(os, 'add_dll_directory'):
-            # Python >= 3.8
-            with os.add_dll_directory(_dll_path):
-                import openslide
-        else:
-            # Python < 3.8
-            _orig_path = os.environ.get('PATH', '')
-            os.environ['PATH'] = _orig_path + ';' + _dll_path
-            import openslide
-            os.environ['PATH'] = _orig_path
-else:
-    import openslide
+import openslide
 from openslide import open_slide, ImageSlide
 from openslide.deepzoom import DeepZoomGenerator
 
@@ -141,7 +127,7 @@ class DeepZoomImageTiler(object):
 class DeepZoomStaticTiler(object):
     """Handles generation of tiles and metadata for all images in a slide."""
 
-    def __init__(self, slidepath, basename, mag_levels, base_mag, format, tile_size, overlap,
+    def __init__(self, slidepath, basename, mag_levels, base_mag, objective, format, tile_size, overlap,
                 limit_bounds, quality, workers, threshold):
         self._slide = open_slide(slidepath)
         self._basename = basename
@@ -150,6 +136,7 @@ class DeepZoomStaticTiler(object):
         self._overlap = overlap
         self._mag_levels = mag_levels
         self._base_mag = base_mag
+        self._objective = objective
         self._limit_bounds = limit_bounds
         self._queue = JoinableQueue(2 * workers)
         self._workers = workers
@@ -174,6 +161,8 @@ class DeepZoomStaticTiler(object):
                     limit_bounds=self._limit_bounds)
         
         MAG_BASE = self._slide.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER)
+        if MAG_BASE is None:
+            MAG_BASE = self._objective
         first_level = int(math.log2(float(MAG_BASE)/self._base_mag)) # raw / input, 40/20=2, 40/40=0
         target_levels = [i+first_level for i in self._mag_levels] # levels start from 0
         target_levels.reverse()
@@ -255,13 +244,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Patch extraction for WSI')
     parser.add_argument('-d', '--dataset', type=str, default='TCGA-lung', help='Dataset name')
     parser.add_argument('-e', '--overlap', type=int, default=0, help='Overlap of adjacent tiles [0]')
-    parser.add_argument('-f', '--format', type=str, default='jpeg', help='image format for tiles [jpeg]')
-    parser.add_argument('-v', '--slide_format', type=str, default='svs', help='image format for tiles [svs]')
-    parser.add_argument('-j', '--workers', type=int, default=4, help='number of worker processes to start [4]')
+    parser.add_argument('-f', '--format', type=str, default='jpeg', help='Image format for tiles [jpeg]')
+    parser.add_argument('-v', '--slide_format', type=str, default='svs', help='Image format for tiles [svs]')
+    parser.add_argument('-j', '--workers', type=int, default=4, help='Number of worker processes to start [4]')
     parser.add_argument('-q', '--quality', type=int, default=70, help='JPEG compression quality [70]')
-    parser.add_argument('-s', '--tile_size', type=int, default=224, help='tile size [224]')
-    parser.add_argument('-b', '--base_mag', type=float, default=20, help='maximum magnification for patch extraction [20]')
+    parser.add_argument('-s', '--tile_size', type=int, default=224, help='Tile size [224]')
+    parser.add_argument('-b', '--base_mag', type=float, default=20, help='Maximum magnification for patch extraction [20]')
     parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=(0,), help='Levels for patch extraction [0]')
+    parser.add_argument('-o', '--objective', type=float, default=20, help='The default objective power if metadata does not present [20]')
     parser.add_argument('-t', '--background_t', type=int, default=15, help='Threshold for filtering background [15]')  
     args = parser.parse_args()
     levels = tuple(args.magnifications)
@@ -276,7 +266,7 @@ if __name__ == '__main__':
     # pos-i_pos-j -> x, y
     for idx, c_slide in enumerate(all_slides):
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
-        DeepZoomStaticTiler(c_slide, 'WSI_temp', levels, args.base_mag, args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
+        DeepZoomStaticTiler(c_slide, 'WSI_temp', levels, args.base_mag, args.objective, args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
         nested_patches(c_slide, out_base, levels)
         shutil.rmtree('WSI_temp_files') 
     print('Patch extraction done for {} slides.'.format(len(all_slides)))
