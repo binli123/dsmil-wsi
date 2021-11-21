@@ -82,7 +82,7 @@ def test(args, bags_list, milnet):
             bag_feats = torch.from_numpy(feats_arr).cuda()
             ins_classes = torch.from_numpy(classes_arr).cuda()
             bag_prediction, A, _ = milnet.b_classifier(bag_feats, ins_classes)
-            bag_prediction = bag_prediction.squeeze().cpu().numpy()
+            bag_prediction = torch.sigmoid(bag_prediction).squeeze().cpu().numpy()
             color = [0, 0, 0]
             if bag_prediction >= args.thres_tumor:
                 print(bags_list[i] + ' is detected as malignant')

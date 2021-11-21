@@ -83,7 +83,7 @@ def test(args, bags_list, milnet):
             bag_feats = torch.from_numpy(feats_arr).cuda()
             ins_classes = torch.from_numpy(classes_arr).cuda()
             bag_prediction, A, _ = milnet.b_classifier(bag_feats, ins_classes)
-            bag_prediction = bag_prediction.squeeze().cpu().numpy()
+            bag_prediction = torch.sigmoid(bag_prediction).squeeze().cpu().numpy()
             if len(bag_prediction.shape)==0 or len(bag_prediction.shape)==1:
                 bag_prediction = np.atleast_1d(bag_prediction)
             benign = True
