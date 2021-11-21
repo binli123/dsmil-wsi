@@ -99,12 +99,12 @@ def test(args, bags_list, milnet):
                         print('and ' + args.class_name[c])          
                         colored_tiles = colored_tiles + np.matmul(attentions[:, None], colors[c][None, :])
                     benign = False # set flag
-            colored_tiles = (colored_tiles / num_pos_classes)
-            colored_tiles = exposure.rescale_intensity(colored_tiles, out_range=(0, 1))
             if benign:
                 print(bags_list[i] + ' is detected as: benign')
                 attentions = torch.sum(A, 1).cpu().numpy()
                 colored_tiles = np.matmul(attentions[:, None], colors[0][None, :]) * 0
+            colored_tiles = (colored_tiles / num_pos_classes)
+            colored_tiles = exposure.rescale_intensity(colored_tiles, out_range=(0, 1))
             color_map = np.zeros((np.amax(pos_arr, 0)[0]+1, np.amax(pos_arr, 0)[1]+1, 3))
             for k, pos in enumerate(pos_arr):
                 color_map[pos[0], pos[1]] = colored_tiles[k]
