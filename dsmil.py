@@ -26,10 +26,14 @@ class IClassifier(nn.Module):
         return feats.view(feats.shape[0], -1), c
 
 class BClassifier(nn.Module):
-    def __init__(self, input_size, output_class, dropout_v=0.0): # K, L, N
+    def __init__(self, input_size, output_class, dropout_v=0.0, nonlinear=True): # K, L, N
         super(BClassifier, self).__init__()
-        self.lin = nn.Sequential(nn.Linear(input_size, input_size), nn.ReLU())
-        self.q = nn.Sequential(nn.Linear(input_size, 128), nn.Tanh())
+        if nonlinear:
+            self.lin = nn.Sequential(nn.Linear(input_size, input_size), nn.ReLU())
+            self.q = nn.Sequential(nn.Linear(input_size, 128), nn.Tanh())
+        else:
+            self.lin = nn.Identity()
+            self.q = nn.Linear(input_size, 128)
         self.v = nn.Sequential(
             nn.Dropout(dropout_v),
             nn.Linear(input_size, input_size)

@@ -143,6 +143,7 @@ def main():
     parser.add_argument('--model', default='dsmil', type=str, help='MIL model [dsmil]')
     parser.add_argument('--dropout_patch', default=0, type=float, help='Patch dropout rate [0]')
     parser.add_argument('--dropout_node', default=0, type=float, help='Bag classifier dropout rate [0]')
+    parser.add_argument('--non_linearity', default=1, type=float, help='Additional nonlinear operation [0]')
     args = parser.parse_args()
     gpu_ids = tuple(args.gpu_index)
     os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)
@@ -153,7 +154,7 @@ def main():
         import abmil as mil
     
     i_classifier = mil.FCLayer(in_size=args.feats_size, out_size=args.num_classes).cuda()
-    b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes, dropout_v=args.dropout_node).cuda()
+    b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes, dropout_v=args.dropout_node, nonlinear=args.non_linearity).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
     if args.model == 'dsmil':
         state_dict_weights = torch.load('init.pth')
@@ -187,7 +188,7 @@ def main():
             print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, AUC: ' % 
                   (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score) + '|'.join('class-{}>>{}'.format(*k) for k in enumerate(aucs))) 
         scheduler.step()
-        current_score = (sum(aucs) + avg_score + 1 - test_loss_bag)/4
+        current_score = (sum(aucs) + avg_score)/2
         if current_score >= best_score:
             best_score = current_score
             save_name = os.path.join(save_path, str(run+1)+'.pth')
