@@ -28,7 +28,8 @@ class IClassifier(nn.Module):
 class BClassifier(nn.Module):
     def __init__(self, input_size, output_class, dropout_v=0.0): # K, L, N
         super(BClassifier, self).__init__()
-        self.q = nn.Linear(input_size, 128)
+        self.lin = nn.Sequential(nn.Linear(input_size, input_size), nn.ReLU())
+        self.q = nn.Sequential(nn.Linear(input_size, 128), nn.Tanh())
         self.v = nn.Sequential(
             nn.Dropout(dropout_v),
             nn.Linear(input_size, input_size)
@@ -39,6 +40,7 @@ class BClassifier(nn.Module):
         
     def forward(self, feats, c): # N x K, N x C
         device = feats.device
+        feats = self.lin(feats)
         V = self.v(feats) # N x V, unsorted
         Q = self.q(feats).view(feats.shape[0], -1) # N x Q, unsorted
         
