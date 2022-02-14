@@ -267,6 +267,6 @@ if __name__ == '__main__':
     for idx, c_slide in enumerate(all_slides):
         print('Process slide {}/{}'.format(idx+1, len(all_slides)))
         DeepZoomStaticTiler(c_slide, 'WSI_temp', levels, args.base_mag, args.objective, args.format, args.tile_size, args.overlap, True, args.quality, args.workers, args.background_t).run()
-        nested_patches(c_slide, out_base, levels)
+        nested_patches(c_slide, out_base, levels, ext=args.format)
         shutil.rmtree('WSI_temp_files') 
     print('Patch extraction done for {} slides.'.format(len(all_slides)))
