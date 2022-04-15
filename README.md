@@ -1,5 +1,5 @@
 # DSMIL: Dual-stream multiple instance learning networks for tumor detection in Whole Slide Image
-This is the Pytorch implementation for the multiple instance learning model described in the paper [Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning](https://arxiv.org/abs/2011.08939) (_CVPR 2021, accepted for oral presentation_).  
+Pytorch implementation for the multiple instance learning model described in the paper [Dual-stream Multiple Instance Learning Network for Whole Slide Image Classification with Self-supervised Contrastive Learning](https://arxiv.org/abs/2011.08939) (_CVPR 2021, accepted for oral presentation_).  
 
 <div align="center">
   <img src="thumbnails/overview.png" width="700px" />
@@ -270,13 +270,12 @@ root
 ## Citation
 If you use the code or results in your research, please use the following BibTeX entry.  
 ```
-@InProceedings{Li_2021_CVPR,
-    author    = {Li, Bin and Li, Yin and Eliceiri, Kevin W.},
-    title     = {Dual-Stream Multiple Instance Learning Network for Whole Slide Image Classification With Self-Supervised Contrastive Learning},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    month     = {June},
-    year      = {2021},
-    pages     = {14318-14328}
+@inproceedings{li2021dual,
+  title={Dual-stream multiple instance learning network for whole slide image classification with self-supervised contrastive learning},
+  author={Li, Bin and Li, Yin and Eliceiri, Kevin W},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={14318--14328},
+  year={2021}
 }
 
 
