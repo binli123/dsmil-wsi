@@ -115,6 +115,10 @@ Separate LUAD and LUSC slides according to the IDs and place the files into fold
 ```
   $ python deepzoom_tiler.py -m 0 -b 10
 ```
+>Camelyon16 consists of mixed magnifications so to reproduce:
+```
+ $ python deepzoom_tiler.py -m 1 -b 20 -d Camelyon16 -v tif
+```
 
 **Train the embedder.**  
 >We provided a modified script from this repository [Pytorch implementation of SimCLR](https://github.com/sthalles/SimCLR) For training the embedder.  
