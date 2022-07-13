@@ -106,7 +106,6 @@ def test(args, bags_list, milnet):
             io.imsave(os.path.join('test', 'output', slide_name+'.png'), img_as_ubyte(color_map))        
             
 if __name__ == '__main__':
-    warnings.filterwarnings('ignore')
     parser = argparse.ArgumentParser(description='Testing workflow includes attention computing and color map production')
     parser.add_argument('--num_classes', type=int, default=2, help='Number of output classes')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size of feeding patches')
