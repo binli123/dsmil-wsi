@@ -98,8 +98,8 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
             for idx, low_patch in enumerate(low_patches):
-                high_patches = glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpg')) + glob.glob(low_patch.replace('.jpeg', os.sep+'*.jpeg'))
-                high_patches = high_patches + glob.glob(low_patch.replace('.jpg', os.sep+'*.jpg')) + glob.glob(low_patch.replace('.jpg', os.sep+'*.jpeg'))
+                high_folder = os.path.dirname(low_patch) + os.sep + os.path.splitext(os.path.basename(low_patch))[0]
+                high_patches = glob.glob(high_folder+os.sep+'*.jpg') + glob.glob(high_folder+os.sep+'*.jpeg')
                 if len(high_patches) == 0:
                     pass
                 else:
@@ -110,7 +110,7 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                         if fusion == 'fusion':
                             feats = feats.cpu().numpy()+0.25*feats_list[idx]
                         if fusion == 'cat':
-                            feats = np.concatenate((feats.cpu().numpy(), 0.25*feats_list[idx]), axis=-1)
+                            feats = np.concatenate((feats.cpu().numpy(), feats_list[idx][None, :]), axis=-1)
                         feats_tree_list.extend(feats)
                 sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, idx+1, len(low_patches)))
             if len(feats_tree_list) == 0:
@@ -238,7 +238,7 @@ def main():
     bags_list = glob.glob(bags_path)
     
     if args.magnification == 'tree':
-        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'fusion')
+        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'cat')
     else:
         compute_feats(args, bags_list, i_classifier, feats_path, args.magnification)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
