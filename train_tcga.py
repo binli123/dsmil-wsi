@@ -83,7 +83,8 @@ def test(test_df, milnet, criterion, optimizer, args):
             total_loss = total_loss + loss.item()
             sys.stdout.write('\r Testing bag [%d/%d] bag loss: %.4f' % (i, len(test_df), loss.item()))
             test_labels.extend([label])
-            test_predictions.extend([(0.0*torch.sigmoid(max_prediction)+1.0*torch.sigmoid(bag_prediction)).squeeze().cpu().numpy()])
+            test_predictions.extend([(0.5*torch.sigmoid(max_prediction)+0.5*torch.sigmoid(bag_prediction)).squeeze().cpu().numpy()])
+#             test_predictions.extend([(0.0*torch.sigmoid(max_prediction)+1.0*torch.sigmoid(bag_prediction)).squeeze().cpu().numpy()])
     test_labels = np.array(test_labels)
     test_predictions = np.array(test_predictions)
     auc_value, _, thresholds_optimal = multi_label_roc(test_labels, test_predictions, args.num_classes, pos_label=1)
@@ -158,7 +159,12 @@ def main():
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
     if args.model == 'dsmil':
         state_dict_weights = torch.load('init.pth')
-        milnet.load_state_dict(state_dict_weights, strict=False)
+        try:
+            milnet.load_state_dict(state_dict_weights, strict=False)
+        except:
+            del state_dict_weights['b_classifier.v.1.weight']
+            del state_dict_weights['b_classifier.v.1.bias']
+            milnet.load_state_dict(state_dict_weights, strict=False)
     criterion = nn.BCEWithLogitsLoss()
     
     optimizer = torch.optim.Adam(milnet.parameters(), lr=args.lr, betas=(0.5, 0.9), weight_decay=args.weight_decay)
