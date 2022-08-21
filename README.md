@@ -157,6 +157,12 @@ To use a specific embedder for each magnification, set option `--weights_low=[RU
 ```
   $ python train_tcga.py --dataset=TCGA-lung
 ```
+**Regarding multiscale features**  
+You can download the precomputed features here:   [Camelyon16](https://drive.google.com/drive/folders/1wHyaZkpgVGSoxPpaCeUCAFGhxcS9ZZEA?usp=sharing)  [TCGA](https://drive.google.com/drive/folders/1v0ZEgSIYgriYuRn_O2p0t3RXdFHtiA61?usp=sharing)  
+At training, use
+```
+  $ python train_tcga.py --feats_size=1024 --dataset=[DATASET_NAME]  --num_classes=[NUMBER_OF_CLASSES]
+```
 
 ## Training on your own datasets
 1. Place WSI files as `WSI\[DATASET_NAME]\[CATEGORY_NAME]\[SLIDE_FOLDER_NAME] (optional)\SLIDE_NAME.svs`. 
