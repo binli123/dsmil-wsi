@@ -26,25 +26,26 @@ class IClassifier(nn.Module):
         return feats.view(feats.shape[0], -1), c
 
 class BClassifier(nn.Module):
-    def __init__(self, input_size, output_class, dropout_v=0.0, nonlinear=True): # K, L, N
+    def __init__(self, input_size, output_class, dropout_v=0.0, nonlinear=True, passing_v=False): # K, L, N
         super(BClassifier, self).__init__()
         if nonlinear:
-            self.lin = nn.Sequential(nn.Linear(input_size, input_size), nn.ReLU())
-            self.q = nn.Sequential(nn.Linear(input_size, 128), nn.Tanh())
+            self.q = nn.Sequential(nn.Linear(input_size, 128), nn.ReLU(), nn.Linear(128, 128), nn.Tanh())
         else:
-            self.lin = nn.Identity()
             self.q = nn.Linear(input_size, 128)
-        self.v = nn.Sequential(
-            nn.Dropout(dropout_v),
-            nn.Linear(input_size, input_size)
-        )
+        if passing_v:
+            self.v = nn.Sequential(
+                nn.Dropout(dropout_v),
+                nn.Linear(input_size, input_size),
+                nn.ReLU()
+            )
+        else:
+            self.v = nn.Identity()
         
         ### 1D convolutional layer that can handle multiple class (including binary)
         self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size)  
         
     def forward(self, feats, c): # N x K, N x C
         device = feats.device
-        feats = self.lin(feats)
         V = self.v(feats) # N x V, unsorted
         Q = self.q(feats).view(feats.shape[0], -1) # N x Q, unsorted
         
