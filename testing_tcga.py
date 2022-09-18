@@ -82,6 +82,9 @@ def test(args, bags_list, milnet):
             ins_classes = torch.from_numpy(classes_arr).cuda()
             bag_prediction, A, _ = milnet.b_classifier(bag_feats, ins_classes)
             bag_prediction = torch.sigmoid(bag_prediction).squeeze().cpu().numpy()
+            if args.average:
+                max_prediction, _ = torch.max(ins_classes, 0) 
+                bag_prediction = (bag_prediction+max_prediction)/2
             color = [0, 0, 0]
             if bag_prediction[0] >= args.thres_luad and bag_prediction[1] < args.thres_lusc:
                 print(bags_list[i] + ' is detected as: LUAD')
@@ -113,6 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--feats_size', type=int, default=512)
     parser.add_argument('--thres_luad', type=float, default=0.7371)
     parser.add_argument('--thres_lusc', type=float, default=0.2752)
+    parser.add_argument('--average', type=bool, default=True, help='Average the score of max-pooling and bag aggregating')
     args = parser.parse_args()
     
     resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
