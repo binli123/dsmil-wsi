@@ -189,7 +189,7 @@ def main():
         test_path = shuffle(test_path).reset_index(drop=True)
         train_loss_bag = train(train_path, milnet, criterion, optimizer, args) # iterate all bags
         test_loss_bag, avg_score, aucs, thresholds_optimal = test(test_path, milnet, criterion, optimizer, args)
-        if args.dataset=='TCGA-lung':
+        if args.dataset.startswith('TCGA-lung'):
             print('\r Epoch [%d/%d] train loss: %.4f test loss: %.4f, average score: %.4f, auc_LUAD: %.4f, auc_LUSC: %.4f' % 
                   (epoch, args.num_epochs, train_loss_bag, test_loss_bag, avg_score, aucs[0], aucs[1]))
         else:
@@ -201,7 +201,7 @@ def main():
             best_score = current_score
             save_name = os.path.join(save_path, str(run+1)+'.pth')
             torch.save(milnet.state_dict(), save_name)
-            if args.dataset=='TCGA-lung':
+            if args.dataset.startswith('TCGA-lung'):
                 print('Best model saved at: ' + save_name + ' Best thresholds: LUAD %.4f, LUSC %.4f' % (thresholds_optimal[0], thresholds_optimal[1]))
             else:
                 print('Best model saved at: ' + save_name)
