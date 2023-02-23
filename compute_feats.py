@@ -81,7 +81,7 @@ def compute_feats(args, bags_list, i_classifier, save_path=None, magnification='
             os.makedirs(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2]), exist_ok=True)
             df.to_csv(os.path.join(save_path, bags_list[i].split(os.path.sep)[-2], bags_list[i].split(os.path.sep)[-1]+'.csv'), index=False, float_format='%.4f')
         
-def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=None, fusion='fusion'):
+def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=None):
     embedder_low.eval()
     embedder_high.eval()
     num_bags = len(bags_list)
@@ -107,10 +107,14 @@ def compute_tree_feats(args, bags_list, embedder_low, embedder_high, save_path=N
                         img = Image.open(high_patch)
                         img = VF.to_tensor(img).float().cuda()
                         feats, classes = embedder_high(img[None, :])
-                        if fusion == 'fusion':
+                        
+                        if args.tree_fusion == 'fusion':
                             feats = feats.cpu().numpy()+0.25*feats_list[idx]
-                        if fusion == 'cat':
+                        elif args.tree_fusion == 'cat':
                             feats = np.concatenate((feats.cpu().numpy(), feats_list[idx][None, :]), axis=-1)
+                        else:
+                            raise NotImplementedError(f"{args.tree_fusion} is not an excepted option for --tree_fusion. This argument accepts 2 options: 'fusion' and 'cat'.")
+                        
                         feats_tree_list.extend(feats)
                 sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, idx+1, len(low_patches)))
             if len(feats_tree_list) == 0:
@@ -133,6 +137,7 @@ def main():
     parser.add_argument('--weights', default=None, type=str, help='Folder of the pretrained weights, simclr/runs/*')
     parser.add_argument('--weights_high', default=None, type=str, help='Folder of the pretrained weights of high magnification, FOLDER < `simclr/runs/[FOLDER]`')
     parser.add_argument('--weights_low', default=None, type=str, help='Folder of the pretrained weights of low magnification, FOLDER <`simclr/runs/[FOLDER]`')
+    parser.add_argument('--tree_fusion', default='cat', type=str, help='Fusion method for high and low mag features in a tree method [cat|fusion]')
     parser.add_argument('--dataset', default='TCGA-lung-single', type=str, help='Dataset folder name [TCGA-lung-single]')
     args = parser.parse_args()
     gpu_ids = tuple(args.gpu_index)
@@ -238,7 +243,7 @@ def main():
     bags_list = glob.glob(bags_path)
     
     if args.magnification == 'tree':
-        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path, 'cat')
+        compute_tree_feats(args, bags_list, i_classifier_l, i_classifier_h, feats_path)
     else:
         compute_feats(args, bags_list, i_classifier, feats_path, args.magnification)
     n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
