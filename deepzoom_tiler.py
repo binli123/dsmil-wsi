@@ -254,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--objective', type=float, default=20, help='The default objective power if metadata does not present [20]')
     parser.add_argument('-t', '--background_t', type=int, default=15, help='Threshold for filtering background [15]')  
     args = parser.parse_args()
-    levels = tuple(args.magnifications)
+    levels = tuple(sorted(args.magnifications))
     assert len(levels)<=2, 'Only 1 or 2 magnifications are supported!'
     path_base = os.path.join('WSI', args.dataset)
     if len(levels) == 2:
