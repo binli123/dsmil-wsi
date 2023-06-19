@@ -64,7 +64,6 @@ def dropout_patches(feats, p):
 
 def test(test_df, milnet, criterion, args):
     milnet.eval()
-    csvs = shuffle(test_df).reset_index(drop=True)
     total_loss = 0
     test_labels = []
     test_predictions = []
