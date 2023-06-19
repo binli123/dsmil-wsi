@@ -36,9 +36,9 @@ def train(train_df, milnet, criterion, optimizer, args):
     total_loss = 0
     bc = 0
     Tensor = torch.cuda.FloatTensor
-    for i in range(len(train_df)):
+    for i in range(len(csvs)):
         optimizer.zero_grad()
-        label, feats = get_bag_feats(train_df.iloc[i], args)
+        label, feats = get_bag_feats(csvs.iloc[i], args)
         feats = dropout_patches(feats, args.dropout_patch)
         bag_label = Variable(Tensor([label]))
         bag_feats = Variable(Tensor([feats]))
@@ -51,8 +51,8 @@ def train(train_df, milnet, criterion, optimizer, args):
         loss.backward()
         optimizer.step()
         total_loss = total_loss + loss.item()
-        sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(train_df), loss.item()))
-    return total_loss / len(train_df)
+        sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(csvs), loss.item()))
+    return total_loss / len(csvs)
 
 def dropout_patches(feats, p):
     idx = np.random.choice(np.arange(feats.shape[0]), int(feats.shape[0]*(1-p)), replace=False)
