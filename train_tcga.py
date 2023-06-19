@@ -32,13 +32,13 @@ def get_bag_feats(csv_file_df, args):
 
 def train(train_df, milnet, criterion, optimizer, args):
     milnet.train()
-    csvs = shuffle(train_df).reset_index(drop=True)
+    train_df_shuffled = shuffle(train_df).reset_index(drop=True)
     total_loss = 0
     bc = 0
     Tensor = torch.cuda.FloatTensor
-    for i in range(len(train_df)):
+    for i in range(len(train_df_shuffled)):
         optimizer.zero_grad()
-        label, feats = get_bag_feats(train_df.iloc[i], args)
+        label, feats = get_bag_feats(train_df_shuffled.iloc[i], args)
         feats = dropout_patches(feats, args.dropout_patch)
         bag_label = Variable(Tensor([label]))
         bag_feats = Variable(Tensor([feats]))
@@ -51,8 +51,8 @@ def train(train_df, milnet, criterion, optimizer, args):
         loss.backward()
         optimizer.step()
         total_loss = total_loss + loss.item()
-        sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(train_df), loss.item()))
-    return total_loss / len(train_df)
+        sys.stdout.write('\r Training bag [%d/%d] bag loss: %.4f' % (i, len(train_df_shuffled), loss.item()))
+    return total_loss / len(train_df_shuffled)
 
 def dropout_patches(feats, p):
     idx = np.random.choice(np.arange(feats.shape[0]), int(feats.shape[0]*(1-p)), replace=False)
@@ -64,7 +64,6 @@ def dropout_patches(feats, p):
 
 def test(test_df, milnet, criterion, args):
     milnet.eval()
-    csvs = shuffle(test_df).reset_index(drop=True)
     total_loss = 0
     test_labels = []
     test_predictions = []
