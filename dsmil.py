@@ -18,7 +18,6 @@ class IClassifier(nn.Module):
         self.feature_extractor = feature_extractor      
         self.fc = nn.Linear(feature_size, output_class)
         
-        
     def forward(self, x):
         device = x.device
         feats = self.feature_extractor(x) # N x K
@@ -42,7 +41,7 @@ class BClassifier(nn.Module):
             self.v = nn.Identity()
         
         ### 1D convolutional layer that can handle multiple class (including binary)
-        self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size)  
+        self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size)
         
     def forward(self, feats, c): # N x K, N x C
         device = feats.device
