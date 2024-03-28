@@ -56,13 +56,44 @@ This dataset requires 30GB of free disk space.
  ```
   $ python train_tcga.py --dataset=Camelyon16 --num_classes=1
 ```
-Useful arguments:
+### Understanding different evaluation schemes and metrics
+>Different training and evaluation schemes can be choosen by setting the arugment (--eval_scheme).
+#### --eval_scheme=5-fold-cv
+>A 5-fold cross-validation. For each fold, AUC and accuracy score will be computed on the validation set. Averaged values across the 5 folds will be computed after all folds complete.
+#### --eval_scheme=5-fold-cv-standalone-test
+>A standalone test set consisting of 20% samples is reserved, remaining 80% samples are used to construct a 5-fold cross-validation.  
+>For each fold, the best model and corresponding threshold are saved.    
+>After the 5-fold cross-validation, 5 best models along with the corresponding optimal thresholds are obtained which are used to perform inference on the reserved test set. A final prediction for a test sample is the majority vote of the 5 models.  
+>For a binary classification, accuracy and balanced accuracy score are computed. For a multi-label classification, hamming loss (smaller the better) and subset accuracy are computed.  
+#### Expected performance
+Camelyon16 with a 5-fold cross-validation.
+| Metric       | Accuracy    | AUC    |
+|--------------|-------------|--------|
+| **Values**  | 94.9%      | 0.961 |
+
+Camelyon16 with a 5-fold cross-validation and a standalone test set.
+| Metric       | Accuracy    | AUC    |
+|--------------|-------------|--------|
+| **Values**  | 92.4%      | 0.915 |
+
+TCGA Lung with a 5-fold cross-validation.
+| Metric       | Accuracy    | AUC    |
+|--------------|-------------|--------|
+| **Values**  | 93.78%      | 0.981 |
+
+TCGA Lung with a 5-fold cross-validation and a standalone test set.
+| Metric       | Subset accuracy    | Hamming loss    |
+|--------------|-------------|--------|
+| **Values**  | 90.9%      | 0.086 |
+
+### Useful arguments:
 ```
-[--num_classes]       # Number of non-negative classes
+[--num_classes]       # Number of non-negative classes, for a binary classification (postive/negative), this is set to 1
 [--feats_size]        # Size of feature vector (depends on the CNN backbone)
-[--lr]                # Initial learning rate [0.0002]
-[--num_epochs]        # Number of training epochs [200]
-[--weight_decay]      # Weight decay [5e-3]
+[--lr]                # Initial learning rate [0.0001]
+[--num_epochs]        # Number of training epochs [100]
+[--stop_epochs]       # Skip remaining epochs if training has not improved after N epochs [10]
+[--weight_decay]      # Weight decay [1e-3]
 [--dataset]           # Dataset folder name
 [--split]             # Training/validation split [0.2]
 [--dropout_patch]     # Randomly dropout a portion of patches and replace with duplicates during training [0]
