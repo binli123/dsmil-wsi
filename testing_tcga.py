@@ -138,7 +138,6 @@ if __name__ == '__main__':
     for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
         name = k_0
         new_state_dict[name] = v
-    i_classifier.load_state_dict(new_state_dict, strict=False)
     new_state_dict["fc.weight"] = aggregator_weights["i_classifier.fc.0.weight"]
     new_state_dict["fc.bias"] = aggregator_weights["i_classifier.fc.0.bias"]
     i_classifier.load_state_dict(new_state_dict, strict=True)
