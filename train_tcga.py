@@ -201,7 +201,7 @@ def main():
     parser.add_argument('--num_classes', default=2, type=int, help='Number of output classes [2]')
     parser.add_argument('--feats_size', default=512, type=int, help='Dimension of the feature size [512]')
     parser.add_argument('--lr', default=0.0001, type=float, help='Initial learning rate [0.0001]')
-    parser.add_argument('--num_epochs', default=100, type=int, help='Number of total training epochs [100]')
+    parser.add_argument('--num_epochs', default=50, type=int, help='Number of total training epochs [100]')
     parser.add_argument('--stop_epochs', default=10, type=int, help='Skip remaining epochs if training has not improved after N epochs [10]')
     parser.add_argument('--gpu_index', type=int, nargs='+', default=(0,), help='GPU ID(s) [0]')
     parser.add_argument('--weight_decay', default=1e-3, type=float, help='Weight decay [1e-3]')
@@ -415,6 +415,18 @@ def main():
             print("Accuracy:", accuracy)
             balanced_accuracy = balanced_accuracy_score(test_labels, combined_predictions)
             print("Balanced Accuracy:", balanced_accuracy)
+
+        os.makedirs('test', exist_ok=True)
+        with open("test/test_list.json", "w") as file:
+            json.dump(reserved_testing_bags, file)
+
+        for i, item in enumerate(fold_models):
+            best_model = item[0]
+            optimal_thresh = item[1]
+            torch.save(best_model.state_dict(), f"test/mil_weights_fold_{i}.pth")
+            with open(f"test/mil_threshold_fold_{i}.json", "w") as file:
+                optimal_thresh = [float(i) for i in optimal_thresh]
+                json.dump(optimal_thresh, file)
                 
 
 if __name__ == '__main__':
