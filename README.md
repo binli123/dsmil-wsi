@@ -6,6 +6,7 @@ Pytorch implementation for the multiple instance learning model described in the
 * Cross-validation and train/valid/test (cross-validation + a standalone test set) in the training script.
 * A stable model initialization method.
 * Better metrics for multi-label tasks.
+* Several bugs fixed in scripts for generating color maps.
 
 <div align="center">
   <img src="thumbnails/overview.png" width="700px" />
