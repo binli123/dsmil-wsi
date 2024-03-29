@@ -141,6 +141,7 @@ if __name__ == '__main__':
     i_classifier.load_state_dict(new_state_dict, strict=False)
     new_state_dict["fc.weight"] = aggregator_weights["i_classifier.fc.0.weight"]
     new_state_dict["fc.bias"] = aggregator_weights["i_classifier.fc.0.bias"]
+    i_classifier.load_state_dict(new_state_dict, strict=True)
     milnet.i_classifier = i_classifier
 
     
