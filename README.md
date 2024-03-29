@@ -72,6 +72,7 @@ This dataset requires 30GB of free disk space.
 >After the 5-fold cross-validation, 5 best models along with the corresponding optimal thresholds are obtained which are used to perform inference on the reserved test set. A final prediction for a test sample is the majority vote of the 5 models.  
 >For a binary classification, accuracy and balanced accuracy score are computed. For a multi-label classification, hamming loss (smaller the better) and subset accuracy are computed.  
 #### Expected performance
+**You may see slightly different performance due to random splits but the difference should be about within 2%**  
 Camelyon16 with a 5-fold cross-validation.
 | Metric       | Accuracy    | AUC    |
 |--------------|-------------|--------|
@@ -97,7 +98,7 @@ TCGA Lung with a 5-fold cross-validation and a standalone test set.
 [--num_classes]       # Number of non-negative classes, for a binary classification (postive/negative), this is set to 1
 [--feats_size]        # Size of feature vector (depends on the CNN backbone)
 [--lr]                # Initial learning rate [0.0001]
-[--num_epochs]        # Number of training epochs [100]
+[--num_epochs]        # Number of training epochs [50]
 [--stop_epochs]       # Skip remaining epochs if training has not improved after N epochs [10]
 [--weight_decay]      # Weight decay [1e-3]
 [--dataset]           # Dataset folder name
