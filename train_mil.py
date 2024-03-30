@@ -1,17 +1,23 @@
+import argparse
+import copy
+import itertools
+import os
+import sys
+from collections import OrderedDict
+from tkinter.messagebox import NO
+
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import torchvision.transforms.functional as VF
-from torchvision import transforms
-
-import sys, argparse, os, copy, itertools
-import pandas as pd
-import numpy as np
-from sklearn.utils import shuffle
-from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_fscore_support
 from sklearn.datasets import load_svmlight_file
-from collections import OrderedDict
+from sklearn.metrics import (precision_recall_fscore_support, roc_auc_score,
+                             roc_curve)
+from sklearn.utils import shuffle
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
 
 def get_data(file_path):
@@ -121,8 +127,8 @@ def main():
     
     if args.model == 'dsmil':
         import dsmil as mil
-    elif args.model == 'abmil':
-        import abmil as mil
+    else:
+        raise NotImplementedError
     
     if args.datasets == 'musk1':
         data_all = get_data('datasets/mil_dataset/Musk/musk1norm.svm')
