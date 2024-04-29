@@ -99,7 +99,7 @@ def test(args, bags_list, milnet):
                 color_map[pos[0], pos[1]] = tile_color
             slide_name = bags_list[i].split(os.sep)[-1]
             color_map = transform.resize(color_map, (color_map.shape[0]*32, color_map.shape[1]*32), order=0)
-            io.imsave(os.path.join('test-c16', 'output', slide_name+'.png'), img_as_ubyte(color_map))        
+            io.imsave(os.path.join('test-c16', 'output', slide_name+'.png'), img_as_ubyte(color_map), check_contrast=False)        
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Testing workflow includes attention computing and color map production')
@@ -107,29 +107,33 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size of feeding patches')
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--feats_size', type=int, default=512)
-    parser.add_argument('--thres_tumor', type=float, default=0.1964)
+    parser.add_argument('--thres_tumor', type=float, default=0.5282700061798096)
     args = parser.parse_args()
     
-    resnet = models.resnet18(pretrained=False, norm_layer=nn.InstanceNorm2d)
+    resnet = models.resnet18(weights=None, norm_layer=nn.InstanceNorm2d)
     for param in resnet.parameters():
         param.requires_grad = False
     resnet.fc = nn.Identity()
     i_classifier = mil.IClassifier(resnet, args.feats_size, output_class=args.num_classes).cuda()
     b_classifier = mil.BClassifier(input_size=args.feats_size, output_class=args.num_classes).cuda()
     milnet = mil.MILNet(i_classifier, b_classifier).cuda()
+    # milnet.load_state_dict(torch.load('test/mil_weights_fold_4.pth'), strict=False)
+    aggregator_weights = torch.load('example_aggregator_weights/c16_aggregator.pth')
+    milnet.load_state_dict(aggregator_weights, strict=False)
+    
     state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'embedder.pth'))
     new_state_dict = OrderedDict()
+    i_classifier = mil.IClassifier(resnet, args.feats_size, output_class=args.num_classes).cuda()
     for i in range(4):
         state_dict_weights.popitem()
     state_dict_init = i_classifier.state_dict()
     for (k, v), (k_0, v_0) in zip(state_dict_weights.items(), state_dict_init.items()):
         name = k_0
         new_state_dict[name] = v
-    i_classifier.load_state_dict(new_state_dict, strict=False)
-    state_dict_weights = torch.load(os.path.join('test-c16', 'weights', 'aggregator.pth'))
-    state_dict_weights["i_classifier.fc.weight"] = state_dict_weights["i_classifier.fc.0.weight"]
-    state_dict_weights["i_classifier.fc.bias"] = state_dict_weights["i_classifier.fc.0.bias"]
-    milnet.load_state_dict(state_dict_weights, strict=False)
+    new_state_dict["fc.weight"] = aggregator_weights["i_classifier.fc.0.weight"]
+    new_state_dict["fc.bias"] = aggregator_weights["i_classifier.fc.0.bias"]
+    i_classifier.load_state_dict(new_state_dict, strict=True)
+    milnet.i_classifier = i_classifier
     
     bags_list = glob.glob(os.path.join('test-c16', 'patches', '*'))
     os.makedirs(os.path.join('test-c16', 'output'), exist_ok=True)
