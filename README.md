@@ -248,6 +248,49 @@ Useful arguments:
 [--map_path]            # Path of output attention maps.
 ```
 
+7. Inference: Testing and Heatmap Visualization
+
+Run inference on new WSIs:
+
+```bash
+python inference.py \
+    --slide_path path/to/wsi.svs \
+    --embedder_low path/to/low_mag_embedder.pth \
+    --embedder_high path/to/high_mag_embedder.pth \
+    --aggregator path/to/aggregator.pth \
+    --output_dir path/to/output_dir \
+    --detection_threshold 0.5
+```
+
+**Key Parameters:**
+
+```text
+--slide_path            # Input WSI file path (.svs format)
+--embedder_low          # Low magnification embedder weights path
+--embedder_high         # High magnification embedder weights path
+--aggregator            # Aggregator model weights path
+--output_dir            # Attention heatmap save directory (optional)
+--tile_size             # Patch size to extract [224]
+--background_threshold  # Background filtering threshold [15]
+--base_mag             # Base magnification [20]
+--magnifications       # Magnification levels [0, 1]
+--device               # Computing device (cpu/cuda)
+--detection_threshold  # Positive detection threshold [0.5]
+--average              # Average bag and instance predictions
+--nonlinear            # Additional nonlinear operation (default: 0)
+--feature_size         # Size of feature vector, 512 per magnification (default: 1024)
+--debug                # Enable debug information
+--debug_model          # Enable detailed model debugging
+```
+
+**Outputs:**
+
+- Binary prediction (Positive/Negative)
+- Prediction probability
+- Attention heatmap (if output_dir specified)
+
+> **Note**: The detection threshold for the aggregator is determined during training with `train_tcga.py` and saved with the model in a JSON file. Adjust the inference parameters according to your training parameters in `train_tcga.py`. This script was originally conceived for dual magnification inference only.
+
 ## Folder structures
 Data is organized in two folders, `WSI` and `datasets`. `WSI` folder contains the images and `datasets` contains the computed features.
 ```
