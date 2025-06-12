@@ -25,7 +25,7 @@ class IClassifier(nn.Module):
         return feats.view(feats.shape[0], -1), c
 
 class BClassifier(nn.Module):
-    def __init__(self, input_size, output_class, dropout_v=0.0, nonlinear=True, passing_v=False): # K, L, N
+    def __init__(self, input_size, output_class,num_cluster = 0, dropout_v=0.0, nonlinear=True, passing_v=False): # K, L, N
         super(BClassifier, self).__init__()
         if nonlinear:
             self.q = nn.Sequential(nn.Linear(input_size, 128), nn.ReLU(), nn.Linear(128, 128), nn.Tanh())
@@ -41,9 +41,9 @@ class BClassifier(nn.Module):
             self.v = nn.Identity()
         
         ### 1D convolutional layer that can handle multiple class (including binary)
-        self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size)
+        self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size+num_cluster)
         
-    def forward(self, feats, c): # N x K, N x C
+    def forward(self, feats, c, clusters=None): # N x K, N x C
         device = feats.device
         V = self.v(feats) # N x V, unsorted
         Q = self.q(feats).view(feats.shape[0], -1) # N x Q, unsorted
@@ -55,8 +55,16 @@ class BClassifier(nn.Module):
         A = torch.mm(Q, q_max.transpose(0, 1)) # compute inner product of Q to each entry of q_max, A in shape N x C, each column contains unnormalized attention scores
         A = F.softmax( A / torch.sqrt(torch.tensor(Q.shape[1], dtype=torch.float32, device=device)), 0) # normalize attention scores, A in shape N x C, 
         B = torch.mm(A.transpose(0, 1), V) # compute bag representation, B in shape C x V
-                
         B = B.view(1, B.shape[0], B.shape[1]) # 1 x C x V
+        if clusters is not None:
+            clusters = clusters.to(dtype=B.dtype, device=B.device) 
+            if clusters.dim() == 1:
+                clusters = clusters.unsqueeze(0)  # shape: [1, x]
+            if clusters.shape[0] != B.shape[0]:  # if needed, repeat across C
+                clusters = clusters.repeat(B.shape[0], 1)  # shape: [C, x]
+            clusters = clusters.unsqueeze(0)  # shape: [1, C, x]
+            B = torch.cat([B, clusters], dim=-1)  # final shape: [1, C, V + x]
+
         C = self.fcc(B) # 1 x C x 1
         C = C.view(1, -1)
         return C, A, B 
@@ -67,9 +75,9 @@ class MILNet(nn.Module):
         self.i_classifier = i_classifier
         self.b_classifier = b_classifier
         
-    def forward(self, x):
+    def forward(self, x, clusters):
         feats, classes = self.i_classifier(x)
-        prediction_bag, A, B = self.b_classifier(feats, classes)
+        prediction_bag, A, B = self.b_classifier(feats, classes,clusters)
         
         return classes, prediction_bag, A, B
         

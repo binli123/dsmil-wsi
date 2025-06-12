@@ -7,6 +7,8 @@ from torchvision import datasets
 import pandas as pd
 from PIL import Image
 from skimage import io, img_as_ubyte
+import torch
+import cv2
 
 np.random.seed(0)
 
@@ -29,7 +31,36 @@ class ToPIL(object):
         img = sample
         img = transforms.functional.to_pil_image(img)
         return img 
+    
+class Pix2Pix(object):
+    def __init__(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = torch.load('/home/karan.padariya/CLAM/Pix2Pix_stain_norm_model/model_11_2400.pth', map_location=self.device)
+        self.model = self.model.to(self.device).float()
+        self.model.eval()
 
+    def __call__(self, I):
+        with torch.no_grad():
+            I = I.permute(1, 2, 0)
+            I = I.detach().numpy()
+            original_size = np.shape(I)[:2]  # (height, width)
+            I_resized = cv2.resize(np.array(I), (256,256))
+            I_resized = I_resized / 127.5 - 1.0 
+            I_resized = np.expand_dims(I_resized, 0)
+
+            if len(I_resized.shape) == 4: 
+                I_tensor = torch.stack([torch.tensor(img, dtype=torch.float32).to(self.device) for img in I_resized])
+            else:
+				# If it's a single image, apply to_tensor directly
+                I_tensor = torch.tensor(I_resized, dtype=torch.float32).to(self.device)
+            output = self.model(I_tensor)
+			
+            prediction_resized = output.cpu().numpy()
+            prediction_resized = cv2.resize(prediction_resized[0], original_size)
+            # out  = Image.fromarray(prediction_resized)
+            # print("out:",type(out))
+            return torch.from_numpy(prediction_resized).permute(2, 0, 1)
+        
 class DataSetWrapper(object):
 
     def __init__(self, batch_size, num_workers, valid_size, input_shape, s):
@@ -48,7 +79,8 @@ class DataSetWrapper(object):
     def _get_simclr_pipeline_transform(self):
         # get a set of data augmentation transformations as described in the SimCLR paper.
         color_jitter = transforms.ColorJitter(0.8 * self.s, 0.8 * self.s, 0.8 * self.s, 0.2 * self.s)
-        data_transforms = transforms.Compose([ToPIL(),
+        data_transforms = transforms.Compose([Pix2Pix(),
+                                              ToPIL(),
                                               transforms.RandomResizedCrop(size=self.input_shape[0]),
                                               transforms.RandomHorizontalFlip(),
                                               transforms.RandomApply([color_jitter], p=0.8),
