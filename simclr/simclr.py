@@ -6,6 +6,8 @@ from loss.nt_xent import NTXentLoss
 import os
 import shutil
 import sys
+import gc
+from tqdm import tqdm
 
 apex_support = False
 try:
@@ -25,7 +27,7 @@ torch.manual_seed(0)
 def _save_config_file(model_checkpoints_folder):
     if not os.path.exists(model_checkpoints_folder):
         os.makedirs(model_checkpoints_folder)
-        shutil.copy('./config.yaml', os.path.join(model_checkpoints_folder, 'config.yaml'))
+        shutil.copy('/home/karan.padariya/dsmil-wsi/simclr/config.yaml', os.path.join(model_checkpoints_folder, 'config.yaml'))
 
 
 class SimCLR(object):
@@ -92,8 +94,10 @@ class SimCLR(object):
         valid_n_iter = 0
         best_valid_loss = np.inf
 
-        for epoch_counter in range(self.config['epochs']):
-            for (xis, xjs) in train_loader:
+        for epoch_counter in tqdm(range(self.config['epochs']), desc= 'Epochs'):
+            for (xis, xjs) in tqdm(train_loader, desc= f'Epoch {epoch_counter+1}', leave= False):
+                gc.collect()
+                torch.cuda.empty_cache() 
                 optimizer.zero_grad()
 
                 xis = xis.to(self.device)

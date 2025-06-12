@@ -37,9 +37,9 @@ def main():
         os.remove('mil-dataset.zip')
     if args.dataset == "tcga":
         print('downloading TCGA Lung Cancer datasets (pre-computed features)')
-        download_url('https://uwmadison.box.com/shared/static/tze4yqclajbdzjwxyb8b1umfwk9vcdwq.zip', 'tcga-dataset.zip')
-        unzip_data('tcga-dataset.zip', 'datasets')
-        os.remove('tcga-dataset.zip')
+        download_url('https://uwmadison.box.com/shared/static/tze4yqclajbdzjwxyb8b1umfwk9vcdwq.zip', '/ssd_scratch/karan.p/tcga-dataset.zip')
+        unzip_data('/ssd_scratch/karan.p/tcga-dataset.zip', '/ssd_scratch/karan.p/datasets')
+        os.remove('/ssd_scratch/karan.p/tcga-dataset.zip')
     if args.dataset == "c16":
         print('downloading Camelyon16 datasets (pre-computed features)')
         download_url('https://uwmadison.box.com/shared/static/l9ou15iwup73ivdjq0bc61wcg5ae8dwe.zip', 'c16-dataset.zip')
@@ -47,10 +47,10 @@ def main():
         os.remove('c16-dataset.zip')
     if args.dataset == "tcga-test":
         print('downloading TCGA Lung Cancer testing datasets')
-        download_url('https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip', 'tcga-dataset-test.zip')
+        download_url('https://uwmadison.box.com/shared/static/q4d9fr93wmllf1navjf2ghc9b0pmzf2a.zip', '/ssd_scratch/karan.p/tcga-dataset-test.zip')
         try:
-            unzip_data('tcga-dataset-test.zip', 'test/input')
-            os.remove('tcga-dataset-test.zip')
+            unzip_data('/ssd_scratch/karan.p/tcga-dataset-test.zip', '/ssd_scratch/karan.p/test/input')
+            os.remove('/ssd_scratch/karan.p/tcga-dataset-test.zip')
         except:
             print('Please unzip `tcga-dataset-test.zip` to `test/input` manually.')
         download_url('https://uwmadison.box.com/shared/static/grxja488s4i07h9wo3tm4sj6t4nqtz0b.zip', 'test-weights.zip')
